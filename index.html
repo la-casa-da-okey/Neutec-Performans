@@ -1,455 +1,48 @@
 
-<!DOCTYPE html>
+<!
+<!doctype html>
 <html lang="tr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>NEUTEC Performans</title>
 <style>
-*{box-sizing:border-box}
-body{margin:0;background:#101827;color:#f1f5f9;font-family:Arial,sans-serif}
-header{background:#172438;padding:22px 18px;border-bottom:1px solid #334155}
-header h1{margin:0;color:#38bdf8;font-size:24px}
-header p{color:#94a3b8;font-size:13px;margin:7px 0 0}
-main{max-width:950px;margin:auto;padding:15px}
-.card{background:#1e293b;border:1px solid #334155;border-radius:13px;padding:16px;margin-bottom:15px}
-h2{font-size:18px;margin:0 0 14px}
-h3{font-size:15px;color:#7dd3fc}
-input,select,button{width:100%;padding:12px;margin:5px 0;border-radius:8px;border:1px solid #475569;font-size:14px}
-input,select{background:#0f172a;color:white}
-button{background:#0284c7;color:white;border:0;font-weight:bold;cursor:pointer}
-button.secondary{background:#334155}
-label{display:block;color:#cbd5e1;font-size:13px;margin-top:9px}
-.muted{color:#94a3b8;font-size:12px}
-.status{color:#7dd3fc;font-size:13px;margin-top:9px;overflow-wrap:anywhere}
-.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
-.metric{background:#0f172a;border-radius:9px;padding:12px}
-.metric strong{display:block;color:#7dd3fc;font-size:20px;margin-top:7px}
-table{width:100%;border-collapse:collapse;font-size:13px}
-th,td{padding:9px 5px;text-align:left;border-bottom:1px solid #334155}
-th{color:#7dd3fc}
-.tablewrap{overflow-x:auto}
-progress{width:100%;height:9px;accent-color:#0ea5e9}
-details>summary{cursor:pointer;list-style:none;font-weight:bold;color:#7dd3fc}
-details>summary::-webkit-details-marker{display:none}
-.hidden{display:none!important}
-.user-title{color:#7dd3fc;font-weight:bold}
-@media(max-width:520px){.row{grid-template-columns:1fr}.grid3{grid-template-columns:1fr 1fr}main{padding:10px}}
+:root{--bg:#0b1220;--panel:#142033;--line:#2a3a50;--text:#edf3fa;--muted:#9aabc0;--blue:#38bdf8}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px Arial,sans-serif}header{background:#111d30;border-bottom:1px solid var(--line);padding:18px}header h1{margin:0;color:var(--blue);font-size:23px}header p{margin:6px 0 0;color:var(--muted);font-size:12px}main{max-width:1000px;margin:auto;padding:12px}.card{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:15px;margin-bottom:13px}h2{font-size:18px;margin:0 0 12px}h3{font-size:14px;color:var(--blue)}label{display:block;font-size:13px;color:#cbd5e1;margin:9px 0 4px}input,select,button{width:100%;padding:12px;border-radius:8px;border:1px solid #40516a;font-size:14px;margin:4px 0}input,select{background:#0b1525;color:white}button{background:#0284c7;color:white;border:0;font-weight:bold}button.secondary{background:#34445b}button.danger{background:#b91c1c}button.ok{background:#15803d}.row{display:grid;grid-template-columns:1fr 1fr;gap:9px}.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.metric{background:#0e1929;border-radius:9px;padding:11px;color:var(--muted);font-size:12px}.metric strong{display:block;color:var(--blue);font-size:21px;margin:6px 0}.muted{color:var(--muted);font-size:12px;line-height:1.5}.status{color:var(--blue);font-size:13px;margin-top:8px;overflow-wrap:anywhere}.hidden{display:none!important}.tablewrap{overflow:auto}table{width:100%;border-collapse:collapse;font-size:13px;min-width:400px}td,th{text-align:left;padding:8px 5px;border-bottom:1px solid var(--line)}th{color:var(--blue)}.person{padding:12px;background:#0e1929;border:1px solid var(--line);border-radius:9px;margin:8px 0}.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}.tag{font-size:11px;padding:4px 8px;border-radius:20px;background:#713f12;color:#fde68a}@media(max-width:550px){.row{grid-template-columns:1fr}.grid3{grid-template-columns:1fr 1fr}}
 </style>
 </head>
 <body>
-
-<header>
-<h1>NEUTEC PERFORMANS</h1>
-<p>Haftalık Satış ve Performans Takibi</p>
-</header>
-
+<header><h1>NEUTEC PERFORMANS</h1><p>Haftalık Satış ve Performans Takibi</p></header>
 <main>
-
-<section class="card">
-<h2>Genel Performans</h2>
-<div class="grid3">
-<div class="metric">Telvis<strong id="totalTelvis">0</strong><span class="muted">Toplam satış</span></div>
-<div class="metric">Ezeros<strong id="totalEzeros">0</strong><span class="muted">Toplam satış</span></div>
-<div class="metric">Sugvida<strong id="totalSugvida">0</strong><span class="muted">Toplam satış</span></div>
-</div>
-<div id="mainStatus" class="status">Veriler yükleniyor...</div>
-</section>
-
-<section class="card">
-<h2>İki Aylık Hedefler</h2>
-<p class="muted">Hedeflerini girmek ve düzenlemek için hesabınla giriş yapmalısın.</p>
-
-<div class="row">
-<div>
-<label for="targetYear">Hedef yılı</label>
-<input id="targetYear" type="number" min="2020" max="2100">
-</div>
-<div>
-<label for="period">İki aylık dönem</label>
-<select id="period">
-<option value="1">Ocak – Şubat</option>
-<option value="2">Mart – Nisan</option>
-<option value="3">Mayıs – Haziran</option>
-<option value="4">Temmuz – Ağustos</option>
-<option value="5">Eylül – Ekim</option>
-<option value="6">Kasım – Aralık</option>
-</select>
-</div>
-</div>
-
-<label for="targetTelvis">Telvis hedefi</label>
-<input id="targetTelvis" type="number" min="0" step="1" value="0">
-
-<label for="targetEzeros">Ezeros hedefi</label>
-<input id="targetEzeros" type="number" min="0" step="1" value="0">
-
-<label for="targetSugvida">Sugvida hedefi</label>
-<input id="targetSugvida" type="number" min="0" step="1" value="0">
-
-<button id="saveTarget">Hedefleri Kaydet</button>
-<div id="targetStatus" class="status"></div>
-</section>
-
-<section class="card">
-<h2>Çalışan Performansları</h2>
-<div id="performance">Veriler yükleniyor...</div>
-</section>
-
-<section class="card">
-<h2>Haftalık Satış Girişi</h2>
-<p class="muted">Yalnızca giriş yapan kullanıcı kendi satışını kaydedebilir. Aynı hafta tekrar girilirse kayıt güncellenir.</p>
-
-<div class="row">
-<div>
-<label for="year">Yıl</label>
-<input id="year" type="number" min="2020" max="2100">
-</div>
-<div>
-<label for="week">Hafta numarası</label>
-<input id="week" type="number" min="1" max="53">
-</div>
-</div>
-
-<label for="telvis">Telvis satış adedi</label>
-<input id="telvis" type="number" min="0" step="1" value="0">
-
-<label for="ezeros">Ezeros satış adedi</label>
-<input id="ezeros" type="number" min="0" step="1" value="0">
-
-<label for="sugvida">Sugvida satış adedi</label>
-<input id="sugvida" type="number" min="0" step="1" value="0">
-
-<button id="saveWeek">Haftalık Verileri Kaydet</button>
-<div id="saveStatus" class="status"></div>
-</section>
-
-<section class="card">
-<details>
-<summary>Hesap / Giriş ▼</summary>
-<div style="margin-top:15px">
-<div id="loggedArea" class="hidden">
-<div id="welcome" class="user-title"></div>
-<button id="logoutButton" class="secondary">Çıkış Yap</button>
-</div>
-
-<div id="loginArea">
-<h3>Kullanıcı Girişi</h3>
-<input id="username" placeholder="Kullanıcı adı" autocomplete="username">
-<input id="password" type="password" placeholder="Şifre" autocomplete="current-password">
-<div class="row">
-<button id="registerButton">Kayıt Ol</button>
-<button id="loginButton" class="secondary">Giriş Yap</button>
-</div>
-</div>
-<div id="authStatus" class="status">Giriş yapabilir veya yeni hesap oluşturabilirsin.</div>
-</div>
-</details>
-</section>
-
+<section class="card"><h2>Genel Performans</h2><div class="grid3"><div class="metric">Telvis<strong id="totalTelvis">0</strong>Toplam satış</div><div class="metric">Ezeros<strong id="totalEzeros">0</strong>Toplam satış</div><div class="metric">Sugvida<strong id="totalSugvida">0</strong>Toplam satış</div></div><div id="mainStatus" class="status">Giriş bekleniyor.</div></section>
+<section class="card hidden" id="adminPanel"><h2>Yönetici · Kullanıcı Onayları</h2><div id="pendingUsers">Yükleniyor...</div><div id="adminStatus" class="status"></div></section>
+<section class="card"><h2>İki Aylık Hedefler</h2><div class="row"><div><label>Hedef yılı</label><input id="targetYear" type="number"></div><div><label>Dönem</label><select id="period"><option value="1">Ocak–Şubat</option><option value="2">Mart–Nisan</option><option value="3">Mayıs–Haziran</option><option value="4">Temmuz–Ağustos</option><option value="5">Eylül–Ekim</option><option value="6">Kasım–Aralık</option></select></div></div><label>Telvis hedefi</label><input id="targetTelvis" type="number" min="0" value="0"><label>Ezeros hedefi</label><input id="targetEzeros" type="number" min="0" value="0"><label>Sugvida hedefi</label><input id="targetSugvida" type="number" min="0" value="0"><button id="saveTarget">Hedefleri Kaydet</button><div id="targetStatus" class="status"></div></section>
+<section class="card"><h2>Çalışan Performansları</h2><div id="performance">Giriş yapıldığında yüklenecek.</div></section>
+<section class="card"><h2>Haftalık Satış Girişi</h2><div class="row"><div><label>Yıl</label><input id="year" type="number"></div><div><label>Hafta</label><input id="week" type="number" min="1" max="53"></div></div><label>Telvis</label><input id="telvis" type="number" min="0" value="0"><label>Ezeros</label><input id="ezeros" type="number" min="0" value="0"><label>Sugvida</label><input id="sugvida" type="number" min="0" value="0"><button id="saveWeek">Haftalık Verileri Kaydet</button><div id="saveStatus" class="status"></div></section>
+<section class="card"><h2>Hesap / Giriş</h2><div id="loggedArea" class="hidden"><div id="welcome"></div><button id="logoutButton" class="secondary">Çıkış Yap</button></div><div id="loginArea"><h3>Giriş Yap</h3><label>E-posta</label><input id="email" type="email" autocomplete="username"><label>Şifre</label><input id="password" type="password" autocomplete="current-password"><div class="row"><button id="loginButton">Giriş Yap</button><button id="resetButton" class="secondary">Şifremi Unuttum</button></div><hr style="border:0;border-top:1px solid #2a3a50;margin:16px 0"><h3>Yeni Çalışan Kaydı</h3><p class="muted">Gerçek e-posta adresinle kayıt ol. Halit Bey onaylamadan uygulama verilerine erişemezsin.</p><label>Ad Soyad</label><input id="newName" autocomplete="name"><label>Kullanıcı adı</label><input id="newUsername" autocomplete="username"><label>Gerçek e-posta</label><input id="newEmail" type="email" autocomplete="email"><label>Şifre (en az 6 karakter)</label><input id="newPassword" type="password" autocomplete="new-password"><button id="registerButton">Kayıt Oluştur</button></div><div id="authStatus" class="status"></div></section>
 </main>
-
 <script type="module">
-import {initializeApp}
-from "https://www.gstatic.com/firebasejs/13.4.0/firebase-app.js";
+import{initializeApp}from"https://www.gstatic.com/firebasejs/13.4.0/firebase-app.js";
+import{getAuth,createUserWithEmailAndPassword,signInWithEmailAndPassword,sendPasswordResetEmail,signOut,onAuthStateChanged}from"https://www.gstatic.com/firebasejs/13.4.0/firebase-auth.js";
+import{getFirestore,collection,doc,setDoc,getDocs,getDoc,serverTimestamp,query,where}from"https://www.gstatic.com/firebasejs/13.4.0/firebase-firestore.js";
+const cfg={apiKey:"AIzaSyCy1Ir07AFwkyg0vQB5zJ-bi2TVgmMT_UA",authDomain:"neutec-performans-c483c.firebaseapp.com",projectId:"neutec-performans-c483c",storageBucket:"neutec-performans-c483c.firebasestorage.app",messagingSenderId:"476444856742",appId:"1:476444856742:web:c0d4d1937f29e56a1eff67"};
+const app=initializeApp(cfg),auth=getAuth(app),db=getFirestore(app),ADMIN="gl0XUoN4wYP058VkY8uS6NQOpJa2", $=id=>document.getElementById(id);
+const names=["Ocak–Şubat","Mart–Nisan","Mayıs–Haziran","Temmuz–Ağustos","Eylül–Ekim","Kasım–Aralık"];let profile=null;
+const admin=()=>auth.currentUser?.uid===ADMIN, ok=()=>admin()||profile?.status==="approved"||profile?.active===true, say=(id,t)=>$(id).textContent=t;
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+async function register(){let name=$("newName").value.trim(),username=$("newUsername").value.trim().toLowerCase(),email=$("newEmail").value.trim(),pw=$("newPassword").value;if(name.length<2||!/^[a-z0-9._-]{3,24}$/.test(username)||!email.includes("@")||pw.length<6){say("authStatus","Bilgileri kontrol et. Kullanıcı adı 3-24 karakter, şifre en az 6 karakter olmalı.");return}try{say("authStatus","Hesap oluşturuluyor...");let c=await createUserWithEmailAndPassword(auth,email,pw);await setDoc(doc(db,"users",c.user.uid),{name,username,createdAt:serverTimestamp(),status:"pending",role:"employee",active:false,employmentStartDate:new Date().toISOString().slice(0,10),employmentEndDate:null});say("authStatus","Kayıt oluşturuldu. Yönetici onayı bekleniyor.");}catch(e){say("authStatus","Kayıt hatası: "+e.message)}}
+async function login(){let e=$("email").value.trim(),p=$("password").value;if(!e||!p){say("authStatus","E-posta ve şifre gir.");return}try{await signInWithEmailAndPassword(auth,e,p);say("authStatus","Giriş başarılı.");}catch(e){say("authStatus","Giriş başarısız. Eski yönetici hesabı için berkaycakir85@neutec.local adresini ve mevcut şifresini kullan.");}}
+async function reset(){let e=$("email").value.trim();if(!e){say("authStatus","Önce e-posta adresini gir.");return}try{await sendPasswordResetEmail(auth,e);say("authStatus","Şifre sıfırlama bağlantısı gönderildi.");}catch(x){say("authStatus","İşlem başarısız: "+x.message)}}
+async function logout(){await signOut(auth)}
+async function authChanged(u){profile=null;$("loggedArea").classList.toggle("hidden",!u);$("loginArea").classList.toggle("hidden",!!u);$("adminPanel").classList.toggle("hidden",!admin());if(!u){$("performance").textContent="Giriş yapıldığında yüklenecek.";say("mainStatus","Giriş bekleniyor.");return}try{let s=await getDoc(doc(db,"users",u.uid));profile=s.exists()?s.data():null;if(!admin()&&!profile){await signOut(auth);say("authStatus","Kullanıcı profili bulunamadı.");return}$("welcome").textContent=(profile?.name||profile?.username||u.email)+(admin()?" · Yönetici":"");if(!ok()){say("mainStatus","Hesabın yönetici onayı bekliyor. Onaylandıktan sonra yeniden giriş yap.");$("performance").textContent="Hesap onay bekliyor.";return}say("mainStatus","Veriler yükleniyor...");if(admin())await pending();await loadTarget();await performance();}catch(e){say("mainStatus","Profil/veri okunamadı: "+e.message)}}
+async function pending(){try{let s=await getDocs(query(collection(db,"users"),where("status","==","pending")));if(s.empty){$("pendingUsers").textContent="Bekleyen hesap yok.";return}$("pendingUsers").innerHTML=s.docs.map(d=>{let p=d.data();return `<div class="person"><b>${esc(p.name||"İsimsiz")}</b> <span class="tag">Onay bekliyor</span><div class="muted">${esc(p.username||"")} · ${p.createdAt?.toDate?p.createdAt.toDate().toLocaleDateString("tr-TR"):""}</div><div class="actions"><button class="ok" data-a="${d.id}">Onayla</button><button class="danger" data-r="${d.id}">Reddet</button></div></div>`}).join("");$("pendingUsers").querySelectorAll("[data-a]").forEach(b=>b.onclick=()=>approval(b.dataset.a,"approved"));$("pendingUsers").querySelectorAll("[data-r]").forEach(b=>b.onclick=()=>approval(b.dataset.r,"rejected"));}catch(e){$("pendingUsers").textContent="Liste alınamadı: "+e.message}}
+async function approval(uid,status){if(!admin())return;try{await setDoc(doc(db,"users",uid),{status,active:status==="approved",approvedAt:serverTimestamp(),approvedBy:auth.currentUser.uid},{merge:true});say("adminStatus",status==="approved"?"Kullanıcı onaylandı.":"Kullanıcı reddedildi.");await pending()}catch(e){say("adminStatus","İşlem başarısız: "+e.message)}}
+async function saveTarget(){if(!ok())return;let y=+ $("targetYear").value,p=+$("period").value,v=["targetTelvis","targetEzeros","targetSugvida"].map(x=>+$(x).value);if(!Number.isInteger(y)||y<2020||y>2100||p<1||p>6||v.some(n=>!Number.isInteger(n)||n<0)){say("targetStatus","Hedef değerlerini kontrol et.");return}try{await setDoc(doc(db,"users",auth.currentUser.uid,"targets",y+"-P"+p),{year:y,period:p,periodName:names[p-1],telvis:v[0],ezeros:v[1],sugvida:v[2],updatedAt:serverTimestamp()});say("targetStatus","Hedef kaydedildi.");await performance()}catch(e){say("targetStatus","Kaydedilemedi: "+e.message)}}
+async function loadTarget(){if(!ok())return;try{let y=+$("targetYear").value,p=+$("period").value,s=await getDoc(doc(db,"users",auth.currentUser.uid,"targets",y+"-P"+p)),d=s.exists()?s.data():{};$("targetTelvis").value=d.telvis||0;$("targetEzeros").value=d.ezeros||0;$("targetSugvida").value=d.sugvida||0}catch(e){say("targetStatus","Hedef okunamadı: "+e.message)}}
+async function saveWeek(){if(!ok())return;let y=+$("year").value,w=+$("week").value,v=["telvis","ezeros","sugvida"].map(x=>+$(x).value);if(!Number.isInteger(y)||y<2020||y>2100||!Number.isInteger(w)||w<1||w>53||v.some(n=>!Number.isInteger(n)||n<0)){say("saveStatus","Yıl, hafta ve satış sayılarını kontrol et.");return}try{let id=y+"-H"+String(w).padStart(2,"0");await setDoc(doc(db,"users",auth.currentUser.uid,"weeks",id),{year:y,week:w,telvis:v[0],ezeros:v[1],sugvida:v[2],updatedAt:serverTimestamp()},{merge:true});say("saveStatus","Haftalık satış kaydedildi.");await performance()}catch(e){say("saveStatus","Kaydedilemedi: "+e.message)}}
+async function performance(){if(!ok())return;try{let us=await getDocs(collection(db,"users")),grand={telvis:0,ezeros:0,sugvida:0},out="";for(let u of us.docs){let p=u.data();if(p.status==="pending"||p.status==="rejected"||p.active===false&&!admin())continue;let [ws,ts]=await Promise.all([getDocs(collection(db,"users",u.id,"weeks")),getDocs(collection(db,"users",u.id,"targets"))]),t={telvis:0,ezeros:0,sugvida:0},rows=[];ws.forEach(x=>{let d=x.data();for(let k of Object.keys(t))t[k]+=Number(d[k]||0);rows.push(d)});for(let k of Object.keys(t))grand[k]+=t[k];rows.sort((a,b)=>b.year-a.year||b.week-a.week);let tr=[];ts.forEach(x=>{let d=x.data();tr.push(`<tr><td>${esc(d.year+" "+(d.periodName||"Dönem "+d.period))}</td><td>${d.telvis||0}</td><td>${d.ezeros||0}</td><td>${d.sugvida||0}</td></tr>`)});out+=`<div class="card"><b>${esc(p.name||p.username||"Çalışan")}</b><div class="grid3"><div class="metric">Telvis<strong>${t.telvis}</strong></div><div class="metric">Ezeros<strong>${t.ezeros}</strong></div><div class="metric">Sugvida<strong>${t.sugvida}</strong></div></div><h3>Hedefler</h3><div class="tablewrap"><table><tr><th>Dönem</th><th>Telvis</th><th>Ezeros</th><th>Sugvida</th></tr>${tr.join("")||"<tr><td colspan=4>Hedef yok</td></tr>"}</table></div><h3>Haftalık satış geçmişi</h3><div class="tablewrap"><table><tr><th>Yıl/Hafta</th><th>Telvis</th><th>Ezeros</th><th>Sugvida</th></tr>${rows.map(r=>`<tr><td>${r.year}/${r.week}</td><td>${r.telvis||0}</td><td>${r.ezeros||0}</td><td>${r.sugvida||0}</td></tr>`).join("")}</table></div></div>`}$("performance").innerHTML=out||"Onaylı çalışan bulunamadı.";$("totalTelvis").textContent=grand.telvis;$("totalEzeros").textContent=grand.ezeros;$("totalSugvida").textContent=grand.sugvida;say("mainStatus","Performans verileri yüklendi.");}catch(e){say("mainStatus","Performans okunamadı: "+e.message)}}
+$("registerButton").onclick=register;$("loginButton").onclick=login;$("resetButton").onclick=reset;$("logoutButton").onclick=logout;$("saveTarget").onclick=saveTarget;$("saveWeek").onclick=saveWeek;$("targetYear").onchange=loadTarget;$("period").onchange=loadTarget;$("year").value=new Date().getFullYear();$("targetYear").value=new Date().getFullYear();$("week").value=1;onAuthStateChanged(auth,authChanged);
+</script></body></html>
 
-import {
- getAuth,createUserWithEmailAndPassword,
- signInWithEmailAndPassword,signOut,onAuthStateChanged
-} from "https://www.gstatic.com/firebasejs/13.4.0/firebase-auth.js";
-
-import {
- getFirestore,collection,doc,setDoc,
- getDocs,getDoc,serverTimestamp
-} from "https://www.gstatic.com/firebasejs/13.4.0/firebase-firestore.js";
-
-const firebaseConfig={
- apiKey:"AIzaSyCy1Ir07AFwkyg0vQBz5J-bi2TVgmMT_UA",
- authDomain:"neutec-performans-c483c.firebaseapp.com",
- projectId:"neutec-performans-c483c",
- storageBucket:"neutec-performans-c483c.firebasestorage.app",
- messagingSenderId:"476444856742",
- appId:"1:476444856742:web:c0d4d1937f29e56a1eff67"
-};
-
-const app=initializeApp(firebaseConfig);
-const auth=getAuth(app);
-const db=getFirestore(app);
-const $=id=>document.getElementById(id);
-
-const periodNames=[
- "Ocak–Şubat","Mart–Nisan","Mayıs–Haziran",
- "Temmuz–Ağustos","Eylül–Ekim","Kasım–Aralık"
-];
-
-function emailFor(name){
- return name.trim().toLowerCase()+"@neutec.local";
-}
-
-function escapeHtml(value){
- return String(value).replace(/[&<>"']/g,c=>({
- "&":"&amp;","<":"&lt;",">":"&gt;",
- '"':"&quot;","'":"&#39;"
- }[c]));
-}
-
-function message(id,text){
- $(id).textContent=text;
-}
-
-async function registerUser(){
- const name=$("username").value.trim().toLowerCase();
- const pass=$("password").value;
-
- if(!/^[a-z0-9._-]{3,24}$/.test(name)){
-  message("authStatus","Kullanıcı adı 3-24 karakter olmalı.");
-  return;
- }
- if(pass.length<6){
-  message("authStatus","Şifre en az 6 karakter olmalı.");
-  return;
- }
-
- message("authStatus","Hesap oluşturuluyor...");
- try{
-  const result=await createUserWithEmailAndPassword(auth,emailFor(name),pass);
-  await setDoc(doc(db,"users",result.user.uid),{
-   username:name,
-   createdAt:serverTimestamp(),
-   active:true,
-   employmentStartDate:new Date().toISOString().slice(0,10),
-   employmentEndDate:null
-  });
-  message("authStatus","Kayıt başarılı.");
- }catch(error){
-  message("authStatus","Kayıt hatası: "+error.message);
- }
-}
-
-async function loginUser(){
- const name=$("username").value.trim().toLowerCase();
- const pass=$("password").value;
- if(!name||!pass){
-  message("authStatus","Kullanıcı adı ve şifre gir.");
-  return;
- }
- message("authStatus","Giriş yapılıyor...");
- try{
-  await signInWithEmailAndPassword(auth,emailFor(name),pass);
-  message("authStatus","Giriş başarılı.");
- }catch(error){
-  message("authStatus","Giriş başarısız. Bilgileri kontrol et.");
- }
-}
-
-async function logoutUser(){
- try{
-  await signOut(auth);
-  message("authStatus","Oturum kapatıldı.");
- }catch(error){
-  message("authStatus","Çıkış yapılamadı: "+error.message);
- }
-}
-
-async function updateInterface(user){
- $("loggedArea").classList.toggle("hidden",!user);
- $("loginArea").classList.toggle("hidden",!!user);
-
- if(user){
-  try{
-   const profile=await getDoc(doc(db,"users",user.uid));
-   $("welcome").textContent="Giriş yapan: "+
-    (profile.exists()?profile.data().username:"Kullanıcı");
-  }catch(error){
-   $("welcome").textContent="Giriş yapıldı.";
-  }
- }
- await loadPerformance();
- await loadTarget();
-}
-
-async function saveTarget(){
- const user=auth.currentUser;
- if(!user){
-  message("targetStatus","Hedef girmek için giriş yapmalısın.");
-  return;
- }
-
- const year=Number($("targetYear").value);
- const period=Number($("period").value);
- const telvis=Number($("targetTelvis").value);
- const ezeros=Number($("targetEzeros").value);
- const sugvida=Number($("targetSugvida").value);
-
- if(!Number.isInteger(year)||year<2020||year>2100||
- !Number.isInteger(period)||period<1||period>6||
- [telvis,ezeros,sugvida].some(x=>!Number.isInteger(x)||x<0)){
-  message("targetStatus","Yıl, dönem ve hedef değerlerini kontrol et.");
-  return;
- }
-
- message("targetStatus","Hedefler kaydediliyor...");
- try{
-  const id=year+"-P"+period;
-  await setDoc(doc(db,"users",user.uid,"targets",id),{
-   year,period,
-   periodName:periodNames[period-1],
-   telvis,ezeros,sugvida,
-   updatedAt:serverTimestamp()
-  });
-  message("targetStatus","Hedefler kaydedildi.");
-  await loadPerformance();
- }catch(error){
-  message("targetStatus","Hedef kaydedilemedi: "+error.message);
- }
-}
-
-async function loadTarget(){
- const user=auth.currentUser;
- if(!user)return;
-
- const year=Number($("targetYear").value);
- const period=Number($("period").value);
- if(!year||!period)return;
-
- try{
-  const id=year+"-P"+period;
-  const result=await getDoc(doc(db,"users",user.uid,"targets",id));
-  if(result.exists()){
-   const d=result.data();
-   $("targetTelvis").value=d.telvis||0;
-   $("targetEzeros").value=d.ezeros||0;
-   $("targetSugvida").value=d.sugvida||0;
-  }else{
-   $("targetTelvis").value=0;
-   $("targetEzeros").value=0;
-   $("targetSugvida").value=0;
-  }
- }catch(error){
-  message("targetStatus","Hedef okunamadı: "+error.message);
- }
-}
-
-async function saveWeek(){
- const user=auth.currentUser;
- if(!user){
-  message("saveStatus","Satış girmek için giriş yapmalısın.");
-  return;
- }
-
- const year=Number($("year").value);
- const week=Number($("week").value);
- const telvis=Number($("telvis").value);
- const ezeros=Number($("ezeros").value);
- const sugvida=Number($("sugvida").value);
-
- if(!Number.isInteger(year)||year<2020||year>2100||
- !Number.isInteger(week)||week<1||week>53||
- [telvis,ezeros,sugvida].some(x=>!Number.isInteger(x)||x<0)){
-  message("saveStatus","Yıl, hafta ve satış sayılarını kontrol et.");
-  return;
- }
-
- const id=year+"-H"+String(week).padStart(2,"0");
- message("saveStatus","Kaydediliyor...");
- try{
-  await setDoc(doc(db,"users",user.uid,"weeks",id),{
-   year,week,telvis,ezeros,sugvida,
-   updatedAt:serverTimestamp()
-  });
-  message("saveStatus","Haftalık satış kaydedildi.");
-  await loadPerformance();
- }catch(error){
-  message("saveStatus","Kayıt hatası: "+error.message);
- }
-}
-
-async function loadPerformance(){
- try{
-  const users=await getDocs(collection(db,"users"));
-  let html="";
-  let grand={telvis:0,ezeros:0,sugvida:0};
-
-  for(const userDoc of users.docs){
-   const profile=userDoc.data();
-   const weeks=await getDocs(collection(db,"users",userDoc.id,"weeks"));
-   const targets=await getDocs(collection(db,"users",userDoc.id,"targets"));
-
-   const totals={telvis:0,ezeros:0,sugvida:0};
-   weeks.forEach(w=>{
-    const d=w.data();
-    totals.telvis+=Number(d.telvis||0);
-    totals.ezeros+=Number(d.ezeros||0);
-    totals.sugvida+=Number(d.sugvida||0);
-   });
-
-   grand.telvis+=totals.telvis;
-   grand.ezeros+=totals.ezeros;
-   grand.sugvida+=totals.sugvida;
-
-   const targetRows=[];
-   targets.forEach(t=>{
-    const d=t.data();
-    const actual=totals;
-    const products=[
-     ["Telvis",d.telvis,actual.telvis],
-     ["Ezeros",d.ezeros,actual.ezeros],
-     ["Sugvida",d.sugvida,actual.sugvida]
-    ];
-    targetRows.push(`
-     <tr><th colspan="3">${escapeHtml(d.year+" "+d.periodName)}</th></tr>
-     ${products.map(p=>{
-      const target=Number(p[1]||0);
-      const done=Number(p[2]||0);
-      const rate=target>0?Math.round(done/target*100):0;
-      return `<tr><td>${p[0]}</td><td>${done} / ${target}</td><td>${target>0?rate+"%":"Hedef yok"}</td></tr>`;
-     }).join("")}
-    `);
-   });
-
-   const records=[];
-   weeks.forEach(w=>records.push(w.data()));
-   records.sort((a,b)=>b.year-a.year||b.week-a.week);
-
-   html+=`
-    <div class="card">
-     <div class="user-title">${escapeHtml(profile.username||"Çalışan")}</div>
-     <div class="grid3">
-      <div class="metric">Telvis<strong>${totals.telvis}</strong></div>
-      <div class="metric">Ezeros<strong>${totals.ezeros}</strong></div>
-      <div class="metric">Sugvida<strong>${totals.sugvida}</strong></div>
-     </div>
-     <h3>Hedefler ve gerçekleşmeler</h3>
-     <div class="tablewrap"><table>
-      <tr><th>Ürün / Dönem</th><th>Satış / Hedef</th><th>Gerçekleşme</th></tr>
-      ${targetRows.join("")||"<tr><td colspan='3'>Henüz hedef girilmemiş.</td></tr>"}
-     </table></div>
-     <h3>Haftalık satış geçmişi</h3>
-     <div class="tablewrap"><table>
-      <tr><th>Yıl / Hafta</th><th>Telvis</th><th>Ezeros</th><th>Sugvida</th></tr>
-      ${records.map(r=>`<tr><td>${r.year} / ${r.week}</td><td>${r.telvis||0}</td><td>${r.ezeros||0}</td><td>${r.sugvida||0}</td></tr>`).join("")}
-     </table></div>
-    </div>`;
-  }
-
-  $("performance").innerHTML=html||"Henüz çalışan kaydı yok.";
-  $("totalTelvis").textContent=grand.telvis;
-  $("totalEzeros").textContent=grand.ezeros;
-  $("totalSugvida").textContent=grand.sugvida;
-  message("mainStatus","Performans verileri güncel.");
- }catch(error){
-  message("mainStatus","Veriler yüklenemedi: "+error.message);
- }
-}
-
-$("registerButton").addEventListener("click",registerUser);
-$("loginButton").addEventListener("click",loginUser);
-$("logoutButton").addEventListener("click",logoutUser);
-$("saveTarget").addEventListener("click",saveTarget);
-$("saveWeek").addEventListener("click",saveWeek);
-$("targetYear").addEventListener("change",loadTarget);
-$("period").addEventListener("change",loadTarget);
 
 $("year").value=new Date().getFullYear();
 $("targetYear").value=new Date().getFullYear();
