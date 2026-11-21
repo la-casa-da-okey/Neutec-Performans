@@ -3,24 +3,22 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>NEUTEC Performans</title>
-
 <style>
 *{box-sizing:border-box}
 body{margin:0;background:#101827;color:#f1f5f9;font-family:Arial,sans-serif}
 header{background:#172438;padding:22px 18px;border-bottom:1px solid #334155}
 header h1{margin:0;color:#38bdf8;font-size:23px}
 header p{margin:7px 0 0;color:#94a3b8;font-size:13px}
-main{max-width:900px;margin:auto;padding:18px}
+main{max-width:900px;margin:auto;padding:16px}
 .card{background:#1e293b;border:1px solid #334155;border-radius:13px;padding:17px;margin-bottom:16px}
 h2{font-size:18px;margin:0 0 15px}
 input,button{width:100%;padding:13px;margin:6px 0;border-radius:8px;border:1px solid #475569;font-size:15px}
 input{background:#0f172a;color:white}
 button{background:#0284c7;color:white;border:0;font-weight:bold;cursor:pointer}
 button.secondary{background:#334155}
-small,.muted{color:#94a3b8}
-.hidden{display:none!important}
+.muted{color:#94a3b8}
 .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 table{width:100%;border-collapse:collapse;font-size:13px}
 th,td{padding:10px 6px;border-bottom:1px solid #334155;text-align:left}
@@ -28,14 +26,10 @@ th{color:#7dd3fc}
 .status{font-size:13px;color:#7dd3fc;margin:8px 0;overflow-wrap:anywhere}
 .user-title{font-weight:bold;color:#7dd3fc;margin-bottom:10px}
 label{display:block;margin-top:8px;font-size:14px;color:#cbd5e1}
-@media(max-width:500px){
- .row{grid-template-columns:1fr}
- main{padding:12px}
- .table-wrap{overflow-x:auto}
-}
+.table-wrap{overflow-x:auto}
+@media(max-width:500px){.row{grid-template-columns:1fr}main{padding:12px}}
 </style>
 </head>
-
 <body>
 
 <header>
@@ -45,21 +39,18 @@ label{display:block;margin-top:8px;font-size:14px;color:#cbd5e1}
 
 <main>
 
-<section class="card" id="authCard">
+<section class="card">
 <h2>Kullanıcı Girişi</h2>
 <input id="username" placeholder="Kullanıcı adı" autocomplete="username">
 <input id="password" type="password" placeholder="Şifre" autocomplete="current-password">
-
 <div class="row">
 <button id="registerButton">Kayıt Ol</button>
 <button class="secondary" id="loginButton">Giriş Yap</button>
 </div>
-
-<p class="muted">Yeni kullanıcılar kendi hesaplarını oluşturabilir. Şifre en az 6 karakter olmalıdır.</p>
-<div id="authStatus" class="status"></div>
+<div id="authStatus" class="status">Giriş yapabilir veya yeni hesap oluşturabilirsin.</div>
 </section>
 
-<section class="card hidden" id="accountCard">
+<section class="card" id="accountCard" style="display:none">
 <div id="welcome" class="user-title"></div>
 <button class="secondary" id="logoutButton">Çıkış Yap</button>
 </section>
@@ -70,9 +61,9 @@ label{display:block;margin-top:8px;font-size:14px;color:#cbd5e1}
 <div id="performance"></div>
 </section>
 
-<section class="card hidden" id="entryCard">
+<section class="card" id="entryCard" style="display:none">
 <h2>Haftalık Satış Girişi</h2>
-<p class="muted">Aynı yıl ve hafta yeniden kaydedilirse mevcut kayıt güncellenir.</p>
+<p class="muted">Aynı yıl ve hafta tekrar kaydedilirse önceki kayıt güncellenir.</p>
 
 <div class="row">
 <div>
@@ -101,8 +92,7 @@ label{display:block;margin-top:8px;font-size:14px;color:#cbd5e1}
 </main>
 
 <script type="module">
-
-import { initializeApp }
+import {initializeApp}
 from "https://www.gstatic.com/firebasejs/13.4.0/firebase-app.js";
 
 import {
@@ -123,7 +113,6 @@ import {
  serverTimestamp
 } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-firestore.js";
 
-
 const firebaseConfig = {
  apiKey: "AIzaSyCy1Ir07AFwkyg0vQBz5J-bi2TVgmMT_UA",
  authDomain: "neutec-performans-c483c.firebaseapp.com",
@@ -139,49 +128,40 @@ const db = getFirestore(app);
 
 const $ = id => document.getElementById(id);
 
-let currentUsername = "";
-
 function accountEmail(name){
- return name.trim().toLowerCase() + "@neutec.local";
+ return name.trim().toLowerCase()+"@neutec.local";
 }
 
 function escapeHtml(value){
- return String(value).replace(/[&<>"']/g, char => ({
-  "&":"&amp;",
-  "<":"&lt;",
-  ">":"&gt;",
-  '"':"&quot;",
-  "'":"&#39;"
- }[char]));
+ return String(value).replace(/[&<>"']/g,c=>({
+  "&":"&amp;","<":"&lt;",">":"&gt;",
+  '"':"&quot;","'":"&#39;"
+ }[c]));
 }
 
-function showAuthMessage(message){
- $("authStatus").textContent = message;
+function authMessage(message){
+ $("authStatus").textContent=message;
 }
 
 async function registerUser(){
-
- const name = $("username").value.trim().toLowerCase();
- const pass = $("password").value;
+ const name=$("username").value.trim().toLowerCase();
+ const pass=$("password").value;
 
  if(!/^[a-z0-9._-]{3,24}$/.test(name)){
-  showAuthMessage("Kullanıcı adı 3-24 karakter olmalı. Harf, rakam, nokta, tire kullanabilirsin.");
+  authMessage("Kullanıcı adı 3-24 karakter olmalı. Harf, rakam, nokta ve tire kullanabilirsin.");
   return;
  }
 
- if(pass.length < 6){
-  showAuthMessage("Şifre en az 6 karakter olmalı.");
+ if(pass.length<6){
+  authMessage("Şifre en az 6 karakter olmalı.");
   return;
  }
 
- showAuthMessage("Hesap oluşturuluyor...");
+ authMessage("Hesap oluşturuluyor...");
 
  try{
-
-  const result = await createUserWithEmailAndPassword(
-   auth,
-   accountEmail(name),
-   pass
+  const result=await createUserWithEmailAndPassword(
+   auth,accountEmail(name),pass
   );
 
   await setDoc(doc(db,"users",result.user.uid),{
@@ -192,276 +172,173 @@ async function registerUser(){
    employmentEndDate:null
   });
 
-  showAuthMessage("Kayıt başarılı.");
-
+  authMessage("Kayıt başarılı. Hoş geldin "+name+".");
+  await updateInterface(result.user);
  }catch(error){
-
-  showAuthMessage("Kayıt hatası: " + error.message);
-
+  authMessage("Kayıt hatası: "+error.message);
  }
-
 }
 
 async function loginUser(){
+ const name=$("username").value.trim().toLowerCase();
+ const pass=$("password").value;
 
- const name = $("username").value.trim().toLowerCase();
- const pass = $("password").value;
-
- if(!name || !pass){
-  showAuthMessage("Kullanıcı adı ve şifre gir.");
+ if(!name||!pass){
+  authMessage("Kullanıcı adı ve şifre gir.");
   return;
  }
 
- showAuthMessage("Giriş yapılıyor...");
+ authMessage("Giriş yapılıyor...");
 
  try{
-
-  await signInWithEmailAndPassword(
-   auth,
-   accountEmail(name),
-   pass
+  const result=await signInWithEmailAndPassword(
+   auth,accountEmail(name),pass
   );
-
-  showAuthMessage("Giriş başarılı.");
-
+  authMessage("Giriş başarılı.");
+  await updateInterface(result.user);
  }catch(error){
-
-  showAuthMessage("Giriş başarısız. Kullanıcı adı veya şifreyi kontrol et.");
-
+  authMessage("Giriş başarısız. Kullanıcı adı veya şifreyi kontrol et.");
  }
-
 }
 
 async function logoutUser(){
-
  try{
   await signOut(auth);
+  authMessage("Oturum kapatıldı.");
  }catch(error){
-  alert("Çıkış hatası: " + error.message);
+  authMessage("Çıkış hatası: "+error.message);
  }
-
 }
 
 async function updateInterface(user){
-
- $("authCard").classList.toggle("hidden",!user);
- $("accountCard").classList.toggle("hidden",!user);
- $("entryCard").classList.toggle("hidden",!user);
-
  if(user){
+  $("accountCard").style.display="block";
+  $("entryCard").style.display="block";
 
   try{
-
-   const profile = await getDoc(doc(db,"users",user.uid));
-
-   currentUsername = profile.exists()
-    ? profile.data().username
-    : "Kullanıcı";
-
-   $("welcome").textContent = "Merhaba, " + currentUsername;
-
+   const profile=await getDoc(doc(db,"users",user.uid));
+   const name=profile.exists()?profile.data().username:"Kullanıcı";
+   $("welcome").textContent="Giriş yapan: "+name;
   }catch(error){
-
-   $("welcome").textContent = "Hesap bilgisi yüklenemedi.";
-
+   $("welcome").textContent="Giriş yapıldı.";
   }
-
+ }else{
+  $("accountCard").style.display="none";
+  $("entryCard").style.display="none";
  }
 
  await loadPerformance();
-
 }
 
 async function saveWeek(){
-
- const user = auth.currentUser;
-
+ const user=auth.currentUser;
  if(!user){
-  alert("Önce giriş yapmalısın.");
+  $("saveStatus").textContent="Önce giriş yapmalısın.";
   return;
  }
 
- const year = Number($("year").value);
- const week = Number($("week").value);
-
- const telvis = Number($("telvis").value);
- const ezeros = Number($("ezeros").value);
- const sugvida = Number($("sugvida").value);
-
- const values = [telvis,ezeros,sugvida];
+ const year=Number($("year").value);
+ const week=Number($("week").value);
+ const telvis=Number($("telvis").value);
+ const ezeros=Number($("ezeros").value);
+ const sugvida=Number($("sugvida").value);
 
  if(
-  !Number.isInteger(year) ||
-  year < 2020 ||
-  year > 2100 ||
-  !Number.isInteger(week) ||
-  week < 1 ||
-  week > 53 ||
-  values.some(value => !Number.isInteger(value) || value < 0)
+  !Number.isInteger(year)||year<2020||year>2100||
+  !Number.isInteger(week)||week<1||week>53||
+  [telvis,ezeros,sugvida].some(x=>!Number.isInteger(x)||x<0)
  ){
-
-  $("saveStatus").textContent = "Yıl, hafta ve satış adetlerini kontrol et.";
+  $("saveStatus").textContent="Yıl, hafta ve satış sayılarını kontrol et.";
   return;
-
  }
 
- const weekId = year + "-H" + String(week).padStart(2,"0");
-
- $("saveStatus").textContent = "Kaydediliyor...";
+ const weekId=year+"-H"+String(week).padStart(2,"0");
+ $("saveStatus").textContent="Kaydediliyor...";
 
  try{
-
   await setDoc(
    doc(db,"users",user.uid,"weeks",weekId),
-   {
-    year,
-    week,
-    telvis,
-    ezeros,
-    sugvida,
-    updatedAt:serverTimestamp()
-   }
+   {year,week,telvis,ezeros,sugvida,updatedAt:serverTimestamp()}
   );
-
-  $("saveStatus").textContent = "Haftalık kayıt başarıyla kaydedildi.";
-
+  $("saveStatus").textContent="Kayıt başarıyla kaydedildi.";
   await loadPerformance();
-
  }catch(error){
-
-  $("saveStatus").textContent = "Kayıt hatası: " + error.message;
-
+  $("saveStatus").textContent="Kayıt hatası: "+error.message;
  }
-
 }
 
 async function loadPerformance(){
-
  try{
-
-  $("status").textContent = "Veriler yükleniyor...";
-
-  const users = await getDocs(collection(db,"users"));
-
-  let html = "";
+  $("status").textContent="Veriler yükleniyor...";
+  const users=await getDocs(collection(db,"users"));
+  let html="";
 
   for(const userDoc of users.docs){
-
-   const profile = userDoc.data();
-
-   const weeks = await getDocs(
+   const profile=userDoc.data();
+   const weeks=await getDocs(
     collection(db,"users",userDoc.id,"weeks")
    );
 
-   const totals = {
-    telvis:0,
-    ezeros:0,
-    sugvida:0
-   };
+   const totals={telvis:0,ezeros:0,sugvida:0};
+   const records=[];
 
-   const records = [];
-
-   weeks.forEach(weekDoc => {
-
-    const data = weekDoc.data();
-
-    totals.telvis += Number(data.telvis || 0);
-    totals.ezeros += Number(data.ezeros || 0);
-    totals.sugvida += Number(data.sugvida || 0);
-
-    records.push(data);
-
+   weeks.forEach(w=>{
+    const d=w.data();
+    totals.telvis+=Number(d.telvis||0);
+    totals.ezeros+=Number(d.ezeros||0);
+    totals.sugvida+=Number(d.sugvida||0);
+    records.push(d);
    });
 
-   records.sort((a,b) =>
-    b.year-a.year || b.week-a.week
-   );
+   records.sort((a,b)=>b.year-a.year||b.week-a.week);
 
-   html += `
+   html+=`
    <div class="card">
-
-    <div class="user-title">
-     ${escapeHtml(profile.username || "Çalışan")}
-    </div>
-
+    <div class="user-title">${escapeHtml(profile.username||"Çalışan")}</div>
     <div class="table-wrap">
     <table>
-     <tr>
-      <th>Ürün</th>
-      <th>Toplam satış</th>
-     </tr>
-     <tr>
-      <td>Telvis</td>
-      <td>${totals.telvis}</td>
-     </tr>
-     <tr>
-      <td>Ezeros</td>
-      <td>${totals.ezeros}</td>
-     </tr>
-     <tr>
-      <td>Sugvida</td>
-      <td>${totals.sugvida}</td>
-     </tr>
+     <tr><th>Ürün</th><th>Toplam satış</th></tr>
+     <tr><td>Telvis</td><td>${totals.telvis}</td></tr>
+     <tr><td>Ezeros</td><td>${totals.ezeros}</td></tr>
+     <tr><td>Sugvida</td><td>${totals.sugvida}</td></tr>
     </table>
     </div>
-
     <p class="muted">Haftalık kayıt: ${records.length}</p>
-
     <div class="table-wrap">
     <table>
-     <tr>
-      <th>Yıl / Hafta</th>
-      <th>Telvis</th>
-      <th>Ezeros</th>
-      <th>Sugvida</th>
-     </tr>
-
-     ${records.map(record => `
+     <tr><th>Yıl / Hafta</th><th>Telvis</th><th>Ezeros</th><th>Sugvida</th></tr>
+     ${records.map(r=>`
       <tr>
-       <td>${record.year} / ${record.week}</td>
-       <td>${Number(record.telvis || 0)}</td>
-       <td>${Number(record.ezeros || 0)}</td>
-       <td>${Number(record.sugvida || 0)}</td>
+       <td>${r.year} / ${r.week}</td>
+       <td>${Number(r.telvis||0)}</td>
+       <td>${Number(r.ezeros||0)}</td>
+       <td>${Number(r.sugvida||0)}</td>
       </tr>
      `).join("")}
-
     </table>
     </div>
-
-   </div>
-   `;
-
+   </div>`;
   }
 
-  $("performance").innerHTML =
-   html || "Henüz çalışan kaydı yok.";
-
-  $("status").textContent = "Performans verileri güncel.";
-
+  $("performance").innerHTML=html||"Henüz çalışan kaydı yok.";
+  $("status").textContent="Performans verileri güncel.";
  }catch(error){
-
-  $("status").textContent =
-   "Veriler yüklenemedi: " + error.message;
-
+  $("status").textContent="Veriler yüklenemedi: "+error.message;
  }
-
 }
-
 
 $("registerButton").addEventListener("click",registerUser);
 $("loginButton").addEventListener("click",loginUser);
 $("logoutButton").addEventListener("click",logoutUser);
 $("saveButton").addEventListener("click",saveWeek);
 
-$("year").value = new Date().getFullYear();
-$("week").value = 1;
+$("year").value=new Date().getFullYear();
+$("week").value=1;
 
-onAuthStateChanged(auth, async user => {
- await updateInterface(user);
+onAuthStateChanged(auth,user=>{
+ updateInterface(user);
 });
 
 </script>
-
 </body>
 </html>
-
