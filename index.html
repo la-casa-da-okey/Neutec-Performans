@@ -3,31 +3,39 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>NEUTEC Performans</title>
 <style>
 *{box-sizing:border-box}
 body{margin:0;background:#101827;color:#f1f5f9;font-family:Arial,sans-serif}
 header{background:#172438;padding:22px 18px;border-bottom:1px solid #334155}
-header h1{margin:0;color:#38bdf8;font-size:23px}
-header p{margin:7px 0 0;color:#94a3b8;font-size:13px}
-main{max-width:900px;margin:auto;padding:16px}
-.card{background:#1e293b;border:1px solid #334155;border-radius:13px;padding:17px;margin-bottom:16px}
-h2{font-size:18px;margin:0 0 15px}
-input,button{width:100%;padding:13px;margin:6px 0;border-radius:8px;border:1px solid #475569;font-size:15px}
-input{background:#0f172a;color:white}
+header h1{margin:0;color:#38bdf8;font-size:24px}
+header p{color:#94a3b8;font-size:13px;margin:7px 0 0}
+main{max-width:950px;margin:auto;padding:15px}
+.card{background:#1e293b;border:1px solid #334155;border-radius:13px;padding:16px;margin-bottom:15px}
+h2{font-size:18px;margin:0 0 14px}
+h3{font-size:15px;color:#7dd3fc}
+input,select,button{width:100%;padding:12px;margin:5px 0;border-radius:8px;border:1px solid #475569;font-size:14px}
+input,select{background:#0f172a;color:white}
 button{background:#0284c7;color:white;border:0;font-weight:bold;cursor:pointer}
 button.secondary{background:#334155}
-.muted{color:#94a3b8}
+label{display:block;color:#cbd5e1;font-size:13px;margin-top:9px}
+.muted{color:#94a3b8;font-size:12px}
+.status{color:#7dd3fc;font-size:13px;margin-top:9px;overflow-wrap:anywhere}
 .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+.metric{background:#0f172a;border-radius:9px;padding:12px}
+.metric strong{display:block;color:#7dd3fc;font-size:20px;margin-top:7px}
 table{width:100%;border-collapse:collapse;font-size:13px}
-th,td{padding:10px 6px;border-bottom:1px solid #334155;text-align:left}
+th,td{padding:9px 5px;text-align:left;border-bottom:1px solid #334155}
 th{color:#7dd3fc}
-.status{font-size:13px;color:#7dd3fc;margin:8px 0;overflow-wrap:anywhere}
-.user-title{font-weight:bold;color:#7dd3fc;margin-bottom:10px}
-label{display:block;margin-top:8px;font-size:14px;color:#cbd5e1}
-.table-wrap{overflow-x:auto}
-@media(max-width:500px){.row{grid-template-columns:1fr}main{padding:12px}}
+.tablewrap{overflow-x:auto}
+progress{width:100%;height:9px;accent-color:#0ea5e9}
+details>summary{cursor:pointer;list-style:none;font-weight:bold;color:#7dd3fc}
+details>summary::-webkit-details-marker{display:none}
+.hidden{display:none!important}
+.user-title{color:#7dd3fc;font-weight:bold}
+@media(max-width:520px){.row{grid-template-columns:1fr}.grid3{grid-template-columns:1fr 1fr}main{padding:10px}}
 </style>
 </head>
 <body>
@@ -40,30 +48,58 @@ label{display:block;margin-top:8px;font-size:14px;color:#cbd5e1}
 <main>
 
 <section class="card">
-<h2>Kullanıcı Girişi</h2>
-<input id="username" placeholder="Kullanıcı adı" autocomplete="username">
-<input id="password" type="password" placeholder="Şifre" autocomplete="current-password">
-<div class="row">
-<button id="registerButton">Kayıt Ol</button>
-<button class="secondary" id="loginButton">Giriş Yap</button>
+<h2>Genel Performans</h2>
+<div class="grid3">
+<div class="metric">Telvis<strong id="totalTelvis">0</strong><span class="muted">Toplam satış</span></div>
+<div class="metric">Ezeros<strong id="totalEzeros">0</strong><span class="muted">Toplam satış</span></div>
+<div class="metric">Sugvida<strong id="totalSugvida">0</strong><span class="muted">Toplam satış</span></div>
 </div>
-<div id="authStatus" class="status">Giriş yapabilir veya yeni hesap oluşturabilirsin.</div>
+<div id="mainStatus" class="status">Veriler yükleniyor...</div>
 </section>
 
-<section class="card" id="accountCard" style="display:none">
-<div id="welcome" class="user-title"></div>
-<button class="secondary" id="logoutButton">Çıkış Yap</button>
+<section class="card">
+<h2>İki Aylık Hedefler</h2>
+<p class="muted">Hedeflerini girmek ve düzenlemek için hesabınla giriş yapmalısın.</p>
+
+<div class="row">
+<div>
+<label for="targetYear">Hedef yılı</label>
+<input id="targetYear" type="number" min="2020" max="2100">
+</div>
+<div>
+<label for="period">İki aylık dönem</label>
+<select id="period">
+<option value="1">Ocak – Şubat</option>
+<option value="2">Mart – Nisan</option>
+<option value="3">Mayıs – Haziran</option>
+<option value="4">Temmuz – Ağustos</option>
+<option value="5">Eylül – Ekim</option>
+<option value="6">Kasım – Aralık</option>
+</select>
+</div>
+</div>
+
+<label for="targetTelvis">Telvis hedefi</label>
+<input id="targetTelvis" type="number" min="0" step="1" value="0">
+
+<label for="targetEzeros">Ezeros hedefi</label>
+<input id="targetEzeros" type="number" min="0" step="1" value="0">
+
+<label for="targetSugvida">Sugvida hedefi</label>
+<input id="targetSugvida" type="number" min="0" step="1" value="0">
+
+<button id="saveTarget">Hedefleri Kaydet</button>
+<div id="targetStatus" class="status"></div>
 </section>
 
 <section class="card">
 <h2>Çalışan Performansları</h2>
-<div id="status" class="status">Veriler yükleniyor...</div>
-<div id="performance"></div>
+<div id="performance">Veriler yükleniyor...</div>
 </section>
 
-<section class="card" id="entryCard" style="display:none">
+<section class="card">
 <h2>Haftalık Satış Girişi</h2>
-<p class="muted">Aynı yıl ve hafta tekrar kaydedilirse önceki kayıt güncellenir.</p>
+<p class="muted">Yalnızca giriş yapan kullanıcı kendi satışını kaydedebilir. Aynı hafta tekrar girilirse kayıt güncellenir.</p>
 
 <div class="row">
 <div>
@@ -85,8 +121,31 @@ label{display:block;margin-top:8px;font-size:14px;color:#cbd5e1}
 <label for="sugvida">Sugvida satış adedi</label>
 <input id="sugvida" type="number" min="0" step="1" value="0">
 
-<button id="saveButton">Haftalık Verileri Kaydet</button>
+<button id="saveWeek">Haftalık Verileri Kaydet</button>
 <div id="saveStatus" class="status"></div>
+</section>
+
+<section class="card">
+<details>
+<summary>Hesap / Giriş ▼</summary>
+<div style="margin-top:15px">
+<div id="loggedArea" class="hidden">
+<div id="welcome" class="user-title"></div>
+<button id="logoutButton" class="secondary">Çıkış Yap</button>
+</div>
+
+<div id="loginArea">
+<h3>Kullanıcı Girişi</h3>
+<input id="username" placeholder="Kullanıcı adı" autocomplete="username">
+<input id="password" type="password" placeholder="Şifre" autocomplete="current-password">
+<div class="row">
+<button id="registerButton">Kayıt Ol</button>
+<button id="loginButton" class="secondary">Giriş Yap</button>
+</div>
+</div>
+<div id="authStatus" class="status">Giriş yapabilir veya yeni hesap oluşturabilirsin.</div>
+</div>
+</details>
 </section>
 
 </main>
@@ -96,51 +155,47 @@ import {initializeApp}
 from "https://www.gstatic.com/firebasejs/13.4.0/firebase-app.js";
 
 import {
- getAuth,
- createUserWithEmailAndPassword,
- signInWithEmailAndPassword,
- signOut,
- onAuthStateChanged
+ getAuth,createUserWithEmailAndPassword,
+ signInWithEmailAndPassword,signOut,onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-auth.js";
 
 import {
- getFirestore,
- collection,
- doc,
- setDoc,
- getDocs,
- getDoc,
- serverTimestamp
+ getFirestore,collection,doc,setDoc,
+ getDocs,getDoc,serverTimestamp
 } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-firestore.js";
 
-const firebaseConfig = {
- apiKey: "AIzaSyCy1Ir07AFwkyg0vQBz5J-bi2TVgmMT_UA",
- authDomain: "neutec-performans-c483c.firebaseapp.com",
- projectId: "neutec-performans-c483c",
- storageBucket: "neutec-performans-c483c.firebasestorage.app",
- messagingSenderId: "476444856742",
- appId: "1:476444856742:web:c0d4d1937f29e56a1eff67"
+const firebaseConfig={
+ apiKey:"AIzaSyCy1Ir07AFwkyg0vQBz5J-bi2TVgmMT_UA",
+ authDomain:"neutec-performans-c483c.firebaseapp.com",
+ projectId:"neutec-performans-c483c",
+ storageBucket:"neutec-performans-c483c.firebasestorage.app",
+ messagingSenderId:"476444856742",
+ appId:"1:476444856742:web:c0d4d1937f29e56a1eff67"
 };
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
+const app=initializeApp(firebaseConfig);
+const auth=getAuth(app);
+const db=getFirestore(app);
+const $=id=>document.getElementById(id);
 
-const $ = id => document.getElementById(id);
+const periodNames=[
+ "Ocak–Şubat","Mart–Nisan","Mayıs–Haziran",
+ "Temmuz–Ağustos","Eylül–Ekim","Kasım–Aralık"
+];
 
-function accountEmail(name){
+function emailFor(name){
  return name.trim().toLowerCase()+"@neutec.local";
 }
 
 function escapeHtml(value){
  return String(value).replace(/[&<>"']/g,c=>({
-  "&":"&amp;","<":"&lt;",">":"&gt;",
-  '"':"&quot;","'":"&#39;"
+ "&":"&amp;","<":"&lt;",">":"&gt;",
+ '"':"&quot;","'":"&#39;"
  }[c]));
 }
 
-function authMessage(message){
- $("authStatus").textContent=message;
+function message(id,text){
+ $(id).textContent=text;
 }
 
 async function registerUser(){
@@ -148,22 +203,17 @@ async function registerUser(){
  const pass=$("password").value;
 
  if(!/^[a-z0-9._-]{3,24}$/.test(name)){
-  authMessage("Kullanıcı adı 3-24 karakter olmalı. Harf, rakam, nokta ve tire kullanabilirsin.");
+  message("authStatus","Kullanıcı adı 3-24 karakter olmalı.");
   return;
  }
-
  if(pass.length<6){
-  authMessage("Şifre en az 6 karakter olmalı.");
+  message("authStatus","Şifre en az 6 karakter olmalı.");
   return;
  }
 
- authMessage("Hesap oluşturuluyor...");
-
+ message("authStatus","Hesap oluşturuluyor...");
  try{
-  const result=await createUserWithEmailAndPassword(
-   auth,accountEmail(name),pass
-  );
-
+  const result=await createUserWithEmailAndPassword(auth,emailFor(name),pass);
   await setDoc(doc(db,"users",result.user.uid),{
    username:name,
    createdAt:serverTimestamp(),
@@ -171,69 +221,120 @@ async function registerUser(){
    employmentStartDate:new Date().toISOString().slice(0,10),
    employmentEndDate:null
   });
-
-  authMessage("Kayıt başarılı. Hoş geldin "+name+".");
-  await updateInterface(result.user);
+  message("authStatus","Kayıt başarılı.");
  }catch(error){
-  authMessage("Kayıt hatası: "+error.message);
+  message("authStatus","Kayıt hatası: "+error.message);
  }
 }
 
 async function loginUser(){
  const name=$("username").value.trim().toLowerCase();
  const pass=$("password").value;
-
  if(!name||!pass){
-  authMessage("Kullanıcı adı ve şifre gir.");
+  message("authStatus","Kullanıcı adı ve şifre gir.");
   return;
  }
-
- authMessage("Giriş yapılıyor...");
-
+ message("authStatus","Giriş yapılıyor...");
  try{
-  const result=await signInWithEmailAndPassword(
-   auth,accountEmail(name),pass
-  );
-  authMessage("Giriş başarılı.");
-  await updateInterface(result.user);
+  await signInWithEmailAndPassword(auth,emailFor(name),pass);
+  message("authStatus","Giriş başarılı.");
  }catch(error){
-  authMessage("Giriş başarısız. Kullanıcı adı veya şifreyi kontrol et.");
+  message("authStatus","Giriş başarısız. Bilgileri kontrol et.");
  }
 }
 
 async function logoutUser(){
  try{
   await signOut(auth);
-  authMessage("Oturum kapatıldı.");
+  message("authStatus","Oturum kapatıldı.");
  }catch(error){
-  authMessage("Çıkış hatası: "+error.message);
+  message("authStatus","Çıkış yapılamadı: "+error.message);
  }
 }
 
 async function updateInterface(user){
- if(user){
-  $("accountCard").style.display="block";
-  $("entryCard").style.display="block";
+ $("loggedArea").classList.toggle("hidden",!user);
+ $("loginArea").classList.toggle("hidden",!!user);
 
+ if(user){
   try{
    const profile=await getDoc(doc(db,"users",user.uid));
-   const name=profile.exists()?profile.data().username:"Kullanıcı";
-   $("welcome").textContent="Giriş yapan: "+name;
+   $("welcome").textContent="Giriş yapan: "+
+    (profile.exists()?profile.data().username:"Kullanıcı");
   }catch(error){
    $("welcome").textContent="Giriş yapıldı.";
   }
- }else{
-  $("accountCard").style.display="none";
-  $("entryCard").style.display="none";
+ }
+ await loadPerformance();
+ await loadTarget();
+}
+
+async function saveTarget(){
+ const user=auth.currentUser;
+ if(!user){
+  message("targetStatus","Hedef girmek için giriş yapmalısın.");
+  return;
  }
 
- await loadPerformance();
+ const year=Number($("targetYear").value);
+ const period=Number($("period").value);
+ const telvis=Number($("targetTelvis").value);
+ const ezeros=Number($("targetEzeros").value);
+ const sugvida=Number($("targetSugvida").value);
+
+ if(!Number.isInteger(year)||year<2020||year>2100||
+ !Number.isInteger(period)||period<1||period>6||
+ [telvis,ezeros,sugvida].some(x=>!Number.isInteger(x)||x<0)){
+  message("targetStatus","Yıl, dönem ve hedef değerlerini kontrol et.");
+  return;
+ }
+
+ message("targetStatus","Hedefler kaydediliyor...");
+ try{
+  const id=year+"-P"+period;
+  await setDoc(doc(db,"users",user.uid,"targets",id),{
+   year,period,
+   periodName:periodNames[period-1],
+   telvis,ezeros,sugvida,
+   updatedAt:serverTimestamp()
+  });
+  message("targetStatus","Hedefler kaydedildi.");
+  await loadPerformance();
+ }catch(error){
+  message("targetStatus","Hedef kaydedilemedi: "+error.message);
+ }
+}
+
+async function loadTarget(){
+ const user=auth.currentUser;
+ if(!user)return;
+
+ const year=Number($("targetYear").value);
+ const period=Number($("period").value);
+ if(!year||!period)return;
+
+ try{
+  const id=year+"-P"+period;
+  const result=await getDoc(doc(db,"users",user.uid,"targets",id));
+  if(result.exists()){
+   const d=result.data();
+   $("targetTelvis").value=d.telvis||0;
+   $("targetEzeros").value=d.ezeros||0;
+   $("targetSugvida").value=d.sugvida||0;
+  }else{
+   $("targetTelvis").value=0;
+   $("targetEzeros").value=0;
+   $("targetSugvida").value=0;
+  }
+ }catch(error){
+  message("targetStatus","Hedef okunamadı: "+error.message);
+ }
 }
 
 async function saveWeek(){
  const user=auth.currentUser;
  if(!user){
-  $("saveStatus").textContent="Önce giriş yapmalısın.";
+  message("saveStatus","Satış girmek için giriş yapmalısın.");
   return;
  }
 
@@ -243,102 +344,120 @@ async function saveWeek(){
  const ezeros=Number($("ezeros").value);
  const sugvida=Number($("sugvida").value);
 
- if(
-  !Number.isInteger(year)||year<2020||year>2100||
-  !Number.isInteger(week)||week<1||week>53||
-  [telvis,ezeros,sugvida].some(x=>!Number.isInteger(x)||x<0)
- ){
-  $("saveStatus").textContent="Yıl, hafta ve satış sayılarını kontrol et.";
+ if(!Number.isInteger(year)||year<2020||year>2100||
+ !Number.isInteger(week)||week<1||week>53||
+ [telvis,ezeros,sugvida].some(x=>!Number.isInteger(x)||x<0)){
+  message("saveStatus","Yıl, hafta ve satış sayılarını kontrol et.");
   return;
  }
 
- const weekId=year+"-H"+String(week).padStart(2,"0");
- $("saveStatus").textContent="Kaydediliyor...";
-
+ const id=year+"-H"+String(week).padStart(2,"0");
+ message("saveStatus","Kaydediliyor...");
  try{
-  await setDoc(
-   doc(db,"users",user.uid,"weeks",weekId),
-   {year,week,telvis,ezeros,sugvida,updatedAt:serverTimestamp()}
-  );
-  $("saveStatus").textContent="Kayıt başarıyla kaydedildi.";
+  await setDoc(doc(db,"users",user.uid,"weeks",id),{
+   year,week,telvis,ezeros,sugvida,
+   updatedAt:serverTimestamp()
+  });
+  message("saveStatus","Haftalık satış kaydedildi.");
   await loadPerformance();
  }catch(error){
-  $("saveStatus").textContent="Kayıt hatası: "+error.message;
+  message("saveStatus","Kayıt hatası: "+error.message);
  }
 }
 
 async function loadPerformance(){
  try{
-  $("status").textContent="Veriler yükleniyor...";
   const users=await getDocs(collection(db,"users"));
   let html="";
+  let grand={telvis:0,ezeros:0,sugvida:0};
 
   for(const userDoc of users.docs){
    const profile=userDoc.data();
-   const weeks=await getDocs(
-    collection(db,"users",userDoc.id,"weeks")
-   );
+   const weeks=await getDocs(collection(db,"users",userDoc.id,"weeks"));
+   const targets=await getDocs(collection(db,"users",userDoc.id,"targets"));
 
    const totals={telvis:0,ezeros:0,sugvida:0};
-   const records=[];
-
    weeks.forEach(w=>{
     const d=w.data();
     totals.telvis+=Number(d.telvis||0);
     totals.ezeros+=Number(d.ezeros||0);
     totals.sugvida+=Number(d.sugvida||0);
-    records.push(d);
    });
 
+   grand.telvis+=totals.telvis;
+   grand.ezeros+=totals.ezeros;
+   grand.sugvida+=totals.sugvida;
+
+   const targetRows=[];
+   targets.forEach(t=>{
+    const d=t.data();
+    const actual=totals;
+    const products=[
+     ["Telvis",d.telvis,actual.telvis],
+     ["Ezeros",d.ezeros,actual.ezeros],
+     ["Sugvida",d.sugvida,actual.sugvida]
+    ];
+    targetRows.push(`
+     <tr><th colspan="3">${escapeHtml(d.year+" "+d.periodName)}</th></tr>
+     ${products.map(p=>{
+      const target=Number(p[1]||0);
+      const done=Number(p[2]||0);
+      const rate=target>0?Math.round(done/target*100):0;
+      return `<tr><td>${p[0]}</td><td>${done} / ${target}</td><td>${target>0?rate+"%":"Hedef yok"}</td></tr>`;
+     }).join("")}
+    `);
+   });
+
+   const records=[];
+   weeks.forEach(w=>records.push(w.data()));
    records.sort((a,b)=>b.year-a.year||b.week-a.week);
 
    html+=`
-   <div class="card">
-    <div class="user-title">${escapeHtml(profile.username||"Çalışan")}</div>
-    <div class="table-wrap">
-    <table>
-     <tr><th>Ürün</th><th>Toplam satış</th></tr>
-     <tr><td>Telvis</td><td>${totals.telvis}</td></tr>
-     <tr><td>Ezeros</td><td>${totals.ezeros}</td></tr>
-     <tr><td>Sugvida</td><td>${totals.sugvida}</td></tr>
-    </table>
-    </div>
-    <p class="muted">Haftalık kayıt: ${records.length}</p>
-    <div class="table-wrap">
-    <table>
-     <tr><th>Yıl / Hafta</th><th>Telvis</th><th>Ezeros</th><th>Sugvida</th></tr>
-     ${records.map(r=>`
-      <tr>
-       <td>${r.year} / ${r.week}</td>
-       <td>${Number(r.telvis||0)}</td>
-       <td>${Number(r.ezeros||0)}</td>
-       <td>${Number(r.sugvida||0)}</td>
-      </tr>
-     `).join("")}
-    </table>
-    </div>
-   </div>`;
+    <div class="card">
+     <div class="user-title">${escapeHtml(profile.username||"Çalışan")}</div>
+     <div class="grid3">
+      <div class="metric">Telvis<strong>${totals.telvis}</strong></div>
+      <div class="metric">Ezeros<strong>${totals.ezeros}</strong></div>
+      <div class="metric">Sugvida<strong>${totals.sugvida}</strong></div>
+     </div>
+     <h3>Hedefler ve gerçekleşmeler</h3>
+     <div class="tablewrap"><table>
+      <tr><th>Ürün / Dönem</th><th>Satış / Hedef</th><th>Gerçekleşme</th></tr>
+      ${targetRows.join("")||"<tr><td colspan='3'>Henüz hedef girilmemiş.</td></tr>"}
+     </table></div>
+     <h3>Haftalık satış geçmişi</h3>
+     <div class="tablewrap"><table>
+      <tr><th>Yıl / Hafta</th><th>Telvis</th><th>Ezeros</th><th>Sugvida</th></tr>
+      ${records.map(r=>`<tr><td>${r.year} / ${r.week}</td><td>${r.telvis||0}</td><td>${r.ezeros||0}</td><td>${r.sugvida||0}</td></tr>`).join("")}
+     </table></div>
+    </div>`;
   }
 
   $("performance").innerHTML=html||"Henüz çalışan kaydı yok.";
-  $("status").textContent="Performans verileri güncel.";
+  $("totalTelvis").textContent=grand.telvis;
+  $("totalEzeros").textContent=grand.ezeros;
+  $("totalSugvida").textContent=grand.sugvida;
+  message("mainStatus","Performans verileri güncel.");
  }catch(error){
-  $("status").textContent="Veriler yüklenemedi: "+error.message;
+  message("mainStatus","Veriler yüklenemedi: "+error.message);
  }
 }
 
 $("registerButton").addEventListener("click",registerUser);
 $("loginButton").addEventListener("click",loginUser);
 $("logoutButton").addEventListener("click",logoutUser);
-$("saveButton").addEventListener("click",saveWeek);
+$("saveTarget").addEventListener("click",saveTarget);
+$("saveWeek").addEventListener("click",saveWeek);
+$("targetYear").addEventListener("change",loadTarget);
+$("period").addEventListener("change",loadTarget);
 
 $("year").value=new Date().getFullYear();
+$("targetYear").value=new Date().getFullYear();
 $("week").value=1;
 
 onAuthStateChanged(auth,user=>{
  updateInterface(user);
 });
-
 </script>
 </body>
 </html>
