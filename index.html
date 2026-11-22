@@ -20,6 +20,21 @@
 <main>
 <section class="card hidden" id="overviewSection"><h2>Genel Performans</h2><div class="grid3"><div class="metric">Telvis<strong id="totalTelvis">0</strong>Toplam satış</div><div class="metric">Ezeros<strong id="totalEzeros">0</strong>Toplam satış</div><div class="metric">Sugvida<strong id="totalSugvida">0</strong>Toplam satış</div></div><div id="mainStatus" class="status">Giriş bekleniyor.</div></section>
 <section class="card hidden" id="adminPanel"><h2>Yönetici · Kullanıcı Onayları</h2><div id="pendingUsers">Yükleniyor...</div><div id="adminStatus" class="status"></div></section>
+
+<section class="card hidden" id="employeeLifecycleSection">
+ <h2>Yönetici · Çalışan İşe Giriş / Çıkış ve Devir</h2>
+ <p class="muted">Çalışanın işe giriş ve ayrılış tarihlerini, varsa satış ve hedef devredilecek kişiyi kaydet. Bu bilgiler prim uygunluğu ve altı aylık devir hesabı için kullanılacaktır.</p>
+ <label for="lifecycleEmployee">Çalışan</label>
+ <select id="lifecycleEmployee"><option value="">Çalışan seç</option></select>
+ <div class="row">
+  <div><label for="employmentStartDate">İşe giriş tarihi</label><input id="employmentStartDate" type="date"></div>
+  <div><label for="employmentEndDate">İşten ayrılış tarihi</label><input id="employmentEndDate" type="date"></div>
+ </div>
+ <label for="successorEmployee">Satış / hedef devredilecek çalışan</label>
+ <select id="successorEmployee"><option value="">Devir yok</option></select>
+ <button id="saveEmployeeLifecycle" class="secondary">Çalışan Bilgilerini Kaydet</button>
+ <div id="lifecycleStatus" class="status"></div>
+</section>
   
 <section class="card hidden" id="periodCloseSection">
   <h2>Yönetici · Dönem Kapatma</h2>
@@ -52,7 +67,7 @@
   <h3>Dönem İçin Beklenen Haftalar</h3>
   <p class="muted">
     IMS kontrolüne göre bu döneme ait haftaları gir.
-    Varsayılan olarak 8 hafta belirlenir.
+    Bu alanlara IMS kontrolüyle kesinleşen hafta numaralarını gir. Sistem hafta numarası varsaymaz.
   </p>
 
   <div class="grid3">
@@ -212,6 +227,7 @@ async function authChanged(u){
  $("loggedArea").classList.toggle("hidden",!u);
  $("loginArea").classList.toggle("hidden",!!u);
  $("adminPanel").classList.toggle("hidden",!admin());
+ $("employeeLifecycleSection").classList.toggle("hidden",!admin());
   $("periodAssignmentSection").classList.toggle("hidden",!admin());
   $("periodCloseSection").classList.toggle("hidden",!admin());
  $("overviewSection").classList.add("hidden");
@@ -235,6 +251,7 @@ async function authChanged(u){
   $("weekSection").classList.remove("hidden");
   say("mainStatus","Veriler yükleniyor...");
   if(admin())await pending();
+   if(admin())await loadEmployeeLifecycle();
    if(admin())await loadAssignEmployees();
    if(admin())await loadExpectedWeeks();
   await loadTarget();
@@ -243,6 +260,74 @@ async function authChanged(u){
  }catch(e){say("mainStatus","Profil/veri okunamadı ("+(e.code||"unknown")+"): "+e.message);}
 }
   
+async function loadEmployeeLifecycle(){
+ if(!admin())return;
+ try{
+  const snap=await getDocs(collection(db,"users"));
+  const employees=snap.docs.filter(d=>{
+   const p=d.data();
+   return d.id!==ADMIN&&(p.status==="approved"||p.active===true||p.employmentEndDate);
+  });
+  const employeeSelect=$("lifecycleEmployee");
+  const successorSelect=$("successorEmployee");
+  employeeSelect.innerHTML='<option value="">Çalışan seç</option>';
+  successorSelect.innerHTML='<option value="">Devir yok</option>';
+  employees.forEach(d=>{
+   const p=d.data();
+   const label=p.name||p.username||d.id;
+   const a=document.createElement("option");a.value=d.id;a.textContent=label;employeeSelect.appendChild(a);
+   const b=document.createElement("option");b.value=d.id;b.textContent=label;successorSelect.appendChild(b);
+  });
+ }catch(e){
+  say("lifecycleStatus","Çalışan listesi yüklenemedi: "+e.message);
+ }
+}
+
+async function loadLifecycleEmployee(){
+ if(!admin())return;
+ const uid=$("lifecycleEmployee").value;
+ if(!uid)return;
+ try{
+  const snap=await getDoc(doc(db,"users",uid));
+  if(!snap.exists())throw new Error("Çalışan profili bulunamadı.");
+  const p=snap.data();
+  $("employmentStartDate").value=p.employmentStartDate||"";
+  $("employmentEndDate").value=p.employmentEndDate||"";
+  $("successorEmployee").value=p.successorUid||"";
+  say("lifecycleStatus","Çalışan bilgileri yüklendi.");
+ }catch(e){
+  say("lifecycleStatus","Bilgiler yüklenemedi: "+e.message);
+ }
+}
+
+async function saveEmployeeLifecycle(){
+ if(!admin())return;
+ const uid=$("lifecycleEmployee").value;
+ const start=$("employmentStartDate").value;
+ const end=$("employmentEndDate").value;
+ const successor=$("successorEmployee").value;
+ if(!uid){say("lifecycleStatus","Önce çalışan seç.");return;}
+ if(!start){say("lifecycleStatus","İşe giriş tarihi zorunludur.");return;}
+ if(end&&end<start){say("lifecycleStatus","İşten ayrılış tarihi işe giriş tarihinden önce olamaz.");return;}
+ if(successor===uid){say("lifecycleStatus","Çalışan kendisini devir alan kişi olarak seçemez.");return;}
+ try{
+  const patch={
+   employmentStartDate:start,
+   employmentEndDate:end||null,
+   successorUid:successor||null,
+   lifecycleUpdatedAt:serverTimestamp(),
+   lifecycleUpdatedBy:auth.currentUser.uid
+  };
+  await setDoc(doc(db,"users",uid),patch,{merge:true});
+  say("lifecycleStatus","İşe giriş / çıkış ve devir bilgileri kaydedildi.");
+  await loadEmployeeLifecycle();
+  $("lifecycleEmployee").value=uid;
+  await loadLifecycleEmployee();
+ }catch(e){
+  say("lifecycleStatus","Kaydedilemedi: "+e.message);
+ }
+}
+
 async function loadAssignEmployees(){
  if(!admin())return;
  try{
@@ -1079,7 +1164,9 @@ async function myPerformance(){
 }
 
 $("registerButton").onclick=register;$("loginButton").onclick=login;$("resetButton").onclick=reset;$("logoutButton").onclick=logout;$("saveTarget").onclick=saveTarget;$("saveWeek").onclick=saveWeek;$("targetYear").onchange=loadTarget;$("period").onchange=loadTarget;
-  $("assignEmployee").onchange=loadAssignWeeks;
+  $("lifecycleEmployee").onchange=loadLifecycleEmployee;
+$("saveEmployeeLifecycle").onclick=saveEmployeeLifecycle;
+$("assignEmployee").onchange=loadAssignWeeks;
 $("assignYear").onchange=loadAssignWeeks;
   $("assignPeriodButton").onclick=assignWeekToPeriod;
   $("closePeriodButton").onclick=closePeriodGlobally;
