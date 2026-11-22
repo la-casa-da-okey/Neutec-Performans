@@ -184,6 +184,7 @@ async function authChanged(u){
   say("mainStatus","Veriler yükleniyor...");
   if(admin())await pending();
    if(admin())await loadAssignEmployees();
+   if(admin())await loadExpectedWeeks();
   await loadTarget();
   await performance();
    await myPerformance();
