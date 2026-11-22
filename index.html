@@ -465,8 +465,6 @@ async function assignWeekToPeriod(){
    120:60000
   };
 
-  const data=snap.exists()?snap.data():defaults;
-
   $("bonus90").value=data?.bonus90??defaults[90];
   $("bonus95").value=data?.bonus95??defaults[95];
   $("bonus100").value=data?.bonus100??defaults[100];
