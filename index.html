@@ -258,7 +258,100 @@ async function assignWeekToPeriod(){
   say("assignStatus","Atama başarısız: "+e.message);
  }
 }
+async function closePeriodGlobally(){
+ if(!admin()){
+  say("closePeriodStatus","Bu işlem için yönetici yetkisi gerekli.");
+  return;
+ }
 
+ const year=Number($("closeYear").value);
+ const period=Number($("closePeriod").value);
+
+ if(!Number.isInteger(year)||year<2020||year>2100||period<1||period>6){
+  say("closePeriodStatus","Yıl veya dönem seçimini kontrol et.");
+  return;
+ }
+
+ const periodId=year+"-P"+period;
+
+ try{
+  say("closePeriodStatus","Çalışan verileri kontrol ediliyor...");
+
+  const users=await getDocs(collection(db,"users"));
+  let employeeCount=0;
+  let assignedWeekCount=0;
+  let targetCount=0;
+  const missingTargets=[];
+
+  for(const u of users.docs){
+   const p=u.data();
+
+   if(p.status!=="approved"&&p.active!==true)continue;
+
+   employeeCount++;
+
+   const [ws,ts]=await Promise.all([
+    getDocs(collection(db,"users",u.id,"weeks")),
+    getDoc(doc(db,"users",u.id,"targets",periodId))
+   ]);
+
+   ws.forEach(w=>{
+    const d=w.data();
+    if(Number(d.year)===year&&Number(d.period)===period){
+     assignedWeekCount++;
+    }
+   });
+
+   if(ts.exists()){
+    targetCount++;
+   }else{
+    missingTargets.push(p.name||p.username||u.id);
+   }
+  }
+
+  const summary=
+   "DÖNEM KAPATMA KONTROLÜ\n\n"+
+   "Dönem: "+year+" · "+names[period-1]+"\n"+
+   "Onaylı çalışan: "+employeeCount+"\n"+
+   "Döneme atanmış haftalık kayıt: "+assignedWeekCount+"\n"+
+   "Hedef kaydı bulunan çalışan: "+targetCount+"\n"+
+   "Hedef kaydı eksik çalışan: "+missingTargets.length+
+   (missingTargets.length?"\nEksikler: "+missingTargets.join(", "):"")+
+   "\n\nBu dönemin tüm kayıtlarını kontrol ettiğini ve kapatmak istediğini onaylıyor musun?";
+
+  if(!confirm(summary)){
+   say("closePeriodStatus","Kapatma işlemi iptal edildi.");
+   return;
+  }
+
+  const closureRef=doc(db,"periodClosures",periodId);
+
+  await runTransaction(db,async(tx)=>{
+   const existing=await tx.get(closureRef);
+
+   if(existing.exists()){
+    throw new Error("Bu dönem daha önce kapatılmış.");
+   }
+
+   tx.set(closureRef,{
+    year:year,
+    period:period,
+    periodName:names[period-1],
+    status:"closed",
+    employeeCount:employeeCount,
+    assignedWeekCount:assignedWeekCount,
+    targetCount:targetCount,
+    closedAt:serverTimestamp(),
+    closedBy:auth.currentUser.uid
+   });
+  });
+
+  say("closePeriodStatus",year+" "+names[period-1]+" dönemi kapatıldı. Kayıt oluşturuldu.");
+
+ }catch(e){
+  say("closePeriodStatus","Dönem kapatılamadı: "+e.message);
+ }
+}
 async function pending(){
  try{
   const s=await getDocs(query(collection(db,"users"),where("status","==","pending")));
