@@ -357,6 +357,122 @@ async function assignWeekToPeriod(){
   say("bonusSettingsStatus","Tarife yüklenemedi: "+e.message);
  }
 }
+  function bonusTier(percent,settings){
+ if(percent<90)return 0;
+ if(percent>=120)return settings.bonus120;
+ if(percent>=110)return settings.bonus110;
+ if(percent>=100)return settings.bonus100;
+ if(percent>=95)return settings.bonus95;
+ return settings.bonus90;
+}
+
+async function calculateBonus(){
+ if(!ok())return;
+
+ const year=Number($("bonusYear").value);
+ const period=Number($("bonusPeriod").value);
+ const periodId=year+"-P"+period;
+
+ if(!Number.isInteger(year)||year<2020||year>2100||period<1||period>6){
+  say("bonusResults","Yıl ve dönem seçimini kontrol et.");
+  return;
+ }
+
+ try{
+  say("bonusResults","Primler hesaplanıyor...");
+
+  const settingSnap=await getDoc(doc(db,"bonusSettings","current"));
+  if(!settingSnap.exists()){
+   say("bonusResults","Prim tarifesi bulunamadı.");
+   return;
+  }
+
+  const settings=settingSnap.data();
+  const products=[
+   {key:"telvis",name:"Telvis",rate:0.40},
+   {key:"ezeros",name:"Ezeros",rate:0.35},
+   {key:"sugvida",name:"Sugvida",rate:0.25}
+  ];
+
+  const users=admin()
+   ? await getDocs(collection(db,"users"))
+   : null;
+
+  const employeeList=admin()
+   ? users.docs.filter(u=>{
+      const p=u.data();
+      return u.id!==ADMIN&&(p.status==="approved"||p.active===true);
+     })
+   : [{id:auth.currentUser.uid,data:()=>profile||{}}];
+
+  let html="";
+
+  for(const employee of employeeList){
+   const uid=employee.id;
+   const p=employee.data();
+
+   const [ws,ts]=await Promise.all([
+    getDocs(collection(db,"users",uid,"weeks")),
+    getDoc(doc(db,"users",uid,"targets",periodId))
+   ]);
+
+   if(!ts.exists()){
+    html+=`<div class="person"><b>${esc(p.name||p.username||"Çalışan")}</b><p class="muted">Dönem hedefi bulunamadı. Prim hesaplanamadı.</p></div>`;
+    continue;
+   }
+
+   const target=ts.data();
+   const actual={telvis:0,ezeros:0,sugvida:0};
+
+   ws.forEach(w=>{
+    const d=w.data();
+    if(Number(d.year)===year&&Number(d.period)===period){
+     products.forEach(x=>actual[x.key]+=Number(d[x.key]||0));
+    }
+   });
+
+   const percentages={};
+   products.forEach(x=>{
+    const t=Number(target[x.key]);
+    percentages[x.key]=t>0?actual[x.key]/t*100:0;
+   });
+
+   const globalGate=products.every(x=>
+    Number(target[x.key])>0&&percentages[x.key]>=75
+   );
+
+   let totalBonus=0;
+   let rows="";
+
+   products.forEach(x=>{
+    const base=bonusTier(percentages[x.key],settings);
+    const bonus=globalGate?base*x.rate:0;
+    totalBonus+=bonus;
+
+    rows+=`<tr>
+     <td>${x.name}</td>
+     <td>%${percentages[x.key].toFixed(1).replace(".",",")}</td>
+     <td>${Math.round(bonus).toLocaleString("tr-TR")} TL</td>
+    </tr>`;
+   });
+
+   html+=`<div class="person">
+    <b>${esc(p.name||p.username||"Çalışan")}</b>
+    <div class="tablewrap"><table>
+     <tr><th>Ürün</th><th>Gerçekleşme</th><th>Prim</th></tr>
+     ${rows}
+    </table></div>
+    <p><b>Toplam ön hesaplama: ${Math.round(totalBonus).toLocaleString("tr-TR")} TL</b></p>
+    ${globalGate?"":"<p class='muted'>En az bir ürün %75 eşiğinin altında veya hedefi eksik. Global prim koşulu sağlanmadı.</p>"}
+   </div>`;
+  }
+
+  $("bonusResults").innerHTML=html||"Hesaplanacak çalışan bulunamadı.";
+
+ }catch(e){
+  say("bonusResults","Hesaplama hatası: "+e.message);
+ }
+}
   async function saveBonusSettings(){
  if(!admin())return;
 
