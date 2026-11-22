@@ -388,6 +388,14 @@ async function calculateBonus(){
   }
 
   const settings=settingSnap.data();
+   const settingKeys=["bonus90","bonus95","bonus100","bonus110","bonus120"];
+
+if(settingKeys.some(k=>
+ !Number.isFinite(Number(settings[k]))||Number(settings[k])<0
+)){
+ say("bonusResults","Prim tarifesinde eksik veya geçersiz tutar var.");
+ return;
+}
   const products=[
    {key:"telvis",name:"Telvis",rate:0.40},
    {key:"ezeros",name:"Ezeros",rate:0.35},
