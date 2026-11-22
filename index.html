@@ -336,6 +336,7 @@ async function myPerformance(){
 $("registerButton").onclick=register;$("loginButton").onclick=login;$("resetButton").onclick=reset;$("logoutButton").onclick=logout;$("saveTarget").onclick=saveTarget;$("saveWeek").onclick=saveWeek;$("targetYear").onchange=loadTarget;$("period").onchange=loadTarget;
   $("assignEmployee").onchange=loadAssignWeeks;
 $("assignYear").onchange=loadAssignWeeks;
+  $("assignPeriodButton").onclick=assignWeekToPeriod;
 $("year").value=new Date().getFullYear();$("targetYear").value=new Date().getFullYear();$("week").value=1;
 onAuthStateChanged(auth,authChanged);
 </script>
