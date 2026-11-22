@@ -300,11 +300,12 @@ async function assignWeekToPeriod(){
  if(!admin())return;
 
  const uid=$("assignEmployee").value;
+ const selectedYear=Number($("assignYear").value);
  const weekId=$("assignWeek").value;
  const period=Number($("assignPeriod").value);
 
- if(!uid||!weekId||period<1||period>6){
-  say("assignStatus","Çalışan, hafta ve dönem seçmelisin.");
+ if(!uid||!Number.isInteger(selectedYear)||selectedYear<2020||selectedYear>2100||!weekId||period<1||period>6){
+  say("assignStatus","Çalışan, geçerli yıl, hafta ve dönem seçmelisin.");
   return;
  }
 
@@ -314,6 +315,11 @@ async function assignWeekToPeriod(){
 
   if(!snap.exists()){
    say("assignStatus","Haftalık kayıt bulunamadı.");
+   return;
+  }
+  if(Number(snap.data().year)!==selectedYear){
+   say("assignStatus","Seçilen hafta, seçili yıla ait değil. Listeyi yenileyip tekrar dene.");
+   await loadAssignWeeks();
    return;
   }
 
@@ -1069,6 +1075,7 @@ $("assignYear").onchange=loadAssignWeeks;
 $("closeYear").onchange=loadExpectedWeeks;
 $("closePeriod").onchange=loadExpectedWeeks;
   $("bonusYear").value=new Date().getFullYear();
+$("assignYear").value=new Date().getFullYear();
 $("year").value=new Date().getFullYear();$("targetYear").value=new Date().getFullYear();$("week").value=1;$("closeYear").value=new Date().getFullYear();
 onAuthStateChanged(auth,authChanged);
 </script>
