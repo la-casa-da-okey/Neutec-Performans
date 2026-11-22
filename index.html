@@ -21,6 +21,40 @@
 <section class="card hidden" id="overviewSection"><h2>Genel Performans</h2><div class="grid3"><div class="metric">Telvis<strong id="totalTelvis">0</strong>Toplam satış</div><div class="metric">Ezeros<strong id="totalEzeros">0</strong>Toplam satış</div><div class="metric">Sugvida<strong id="totalSugvida">0</strong>Toplam satış</div></div><div id="mainStatus" class="status">Giriş bekleniyor.</div></section>
 <section class="card hidden" id="adminPanel"><h2>Yönetici · Kullanıcı Onayları</h2><div id="pendingUsers">Yükleniyor...</div><div id="adminStatus" class="status"></div></section>
   
+<section class="card hidden" id="periodCloseSection">
+  <h2>Yönetici · Dönem Kapatma</h2>
+
+  <p class="muted">
+    Seçilen dönem tüm çalışanlar için tek işlemle kapatılır.
+    Kapatmadan önce haftalık satış ve dönem atamalarını kontrol et.
+  </p>
+
+  <div class="row">
+    <div>
+      <label for="closeYear">Yıl</label>
+      <input id="closeYear" type="number">
+    </div>
+
+    <div>
+      <label for="closePeriod">İki aylık dönem</label>
+      <select id="closePeriod">
+        <option value="1">Ocak–Şubat</option>
+        <option value="2">Mart–Nisan</option>
+        <option value="3">Mayıs–Haziran</option>
+        <option value="4">Temmuz–Ağustos</option>
+        <option value="5">Eylül–Ekim</option>
+        <option value="6">Kasım–Aralık</option>
+      </select>
+    </div>
+  </div>
+
+  <button id="closePeriodButton" class="danger">
+    Dönemi Tüm Çalışanlar İçin Kapat
+  </button>
+
+  <div id="closePeriodStatus" class="status"></div>
+</section>
+
 <section class="card hidden" id="periodAssignmentSection">
   <h2>Haftalık Satışları Dönemlere Ata</h2>
 
