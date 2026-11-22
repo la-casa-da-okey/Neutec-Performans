@@ -257,19 +257,177 @@ async function saveWeek(){
  try{const id=y+"-H"+String(w).padStart(2,"0");await setDoc(doc(db,"users",auth.currentUser.uid,"weeks",id),{year:y,week:w,telvis:v[0],ezeros:v[1],sugvida:v[2],updatedAt:serverTimestamp()},{merge:true});say("saveStatus","Haftalık satış kaydedildi.");await performance();await myPerformance();}
  catch(e){say("saveStatus","Kaydedilemedi: "+e.message);}
 }
+
 async function performance(){
  if(!ok())return;
+
  try{
-  const us=await getDocs(collection(db,"users")),grand={telvis:0,ezeros:0,sugvida:0};let out="";
+  const us=await getDocs(collection(db,"users"));
+  const grand={telvis:0,ezeros:0,sugvida:0};
+  let out="";
+
+  const products=["telvis","ezeros","sugvida"];
+  const fmt=n=>Number(n||0).toLocaleString("tr-TR");
+  const pct=(actual,target)=>target>0
+   ? "%"+(actual/target*100).toFixed(1).replace(".",",")
+   : "—";
+
   for(const u of us.docs){
-   const p=u.data();if(p.status==="pending"||p.status==="rejected"||(p.active===false&&!admin()))continue;
-   const [ws,ts]=await Promise.all([getDocs(collection(db,"users",u.id,"weeks")),getDocs(collection(db,"users",u.id,"targets"))]);
-   const t={telvis:0,ezeros:0,sugvida:0},rows=[];
-   ws.forEach(x=>{const d=x.data();for(const k of Object.keys(t))t[k]+=Number(d[k]||0);rows.push(d);});
-   for(const k of Object.keys(t))grand[k]+=t[k];rows.sort((a,b)=>b.year-a.year||b.week-a.week);
-   const tr=[];ts.forEach(x=>{const d=x.data();tr.push(`<tr><td>${esc(d.year+" "+(d.periodName||"Dönem "+d.period))}</td><td>${d.telvis||0}</td><td>${d.ezeros||0}</td><td>${d.sugvida||0}</td></tr>`);});
-   out+=`<div class="card"><b>${esc(p.name||p.username||"Çalışan")}</b><div class="grid3"><div class="metric">Telvis<strong>${t.telvis}</strong></div><div class="metric">Ezeros<strong>${t.ezeros}</strong></div><div class="metric">Sugvida<strong>${t.sugvida}</strong></div></div><h3>Hedefler</h3><div class="tablewrap"><table><tr><th>Dönem</th><th>Telvis</th><th>Ezeros</th><th>Sugvida</th></tr>${tr.join("")||"<tr><td colspan=4>Hedef yok</td></tr>"}</table></div><h3>Haftalık satış geçmişi</h3><div class="tablewrap"><table><tr><th>Yıl/Hafta</th><th>Telvis</th><th>Ezeros</th><th>Sugvida</th></tr>${rows.map(r=>`<tr><td>${r.year}/${r.week}</td><td>${r.telvis||0}</td><td>${r.ezeros||0}</td><td>${r.sugvida||0}</td></tr>`).join("")}</table></div></div>`;
+   const p=u.data();
+
+   if(p.status==="pending"||p.status==="rejected"||(p.active===false&&!admin()))continue;
+
+   const [ws,ts]=await Promise.all([
+    getDocs(collection(db,"users",u.id,"weeks")),
+    getDocs(collection(db,"users",u.id,"targets"))
+   ]);
+
+   const total={telvis:0,ezeros:0,sugvida:0};
+   const weeks=[];
+   const targets={};
+   const years=new Set();
+
+   ws.forEach(x=>{
+    const d=x.data();
+    const year=Number(d.year);
+    const week=Number(d.week);
+
+    if(!Number.isInteger(year))return;
+
+    years.add(year);
+    weeks.push(d);
+
+    products.forEach(k=>{
+     total[k]+=Number(d[k]||0);
+    });
+   });
+
+   ts.forEach(x=>{
+    const d=x.data();
+    const year=Number(d.year);
+    const period=Number(d.period);
+
+    if(!Number.isInteger(year)||period<1||period>6)return;
+
+    years.add(year);
+    targets[year+"-"+period]=d;
+   });
+
+   products.forEach(k=>grand[k]+=total[k]);
+
+   const periodRows=[];
+
+   [...years].sort((a,b)=>b-a).forEach(year=>{
+    for(let period=1;period<=6;period++){
+     const assigned=weeks.filter(w=>
+      Number(w.year)===year&&Number(w.period)===period
+     );
+
+     const actual={telvis:0,ezeros:0,sugvida:0};
+
+     assigned.forEach(w=>{
+      products.forEach(k=>{
+       actual[k]+=Number(w[k]||0);
+      });
+     });
+
+     const target=targets[year+"-"+period]||{
+      telvis:0,ezeros:0,sugvida:0
+     };
+
+     const hasData=assigned.length>0||targets[year+"-"+period];
+
+     if(!hasData)continue;
+
+     periodRows.push(`
+      <tr>
+       <td>${year}<br>${names[period-1]}</td>
+       <td>${assigned.length}</td>
+       <td>${fmt(actual.telvis)} / ${fmt(target.telvis)}
+        <br><b>${pct(actual.telvis,Number(target.telvis||0))}</b>
+       </td>
+       <td>${fmt(actual.ezeros)} / ${fmt(target.ezeros)}
+        <br><b>${pct(actual.ezeros,Number(target.ezeros||0))}</b>
+       </td>
+       <td>${fmt(actual.sugvida)} / ${fmt(target.sugvida)}
+        <br><b>${pct(actual.sugvida,Number(target.sugvida||0))}</b>
+       </td>
+      </tr>
+     `);
+    }
+   });
+
+   const rows=[...weeks].sort((a,b)=>
+    Number(b.year)-Number(a.year)||Number(b.week)-Number(a.week)
+   );
+
+   out+=`
+    <div class="card">
+     <b>${esc(p.name||p.username||"Çalışan")}</b>
+
+     <div class="grid3">
+      <div class="metric">Telvis<strong>${fmt(total.telvis)}</strong></div>
+      <div class="metric">Ezeros<strong>${fmt(total.ezeros)}</strong></div>
+      <div class="metric">Sugvida<strong>${fmt(total.sugvida)}</strong></div>
+     </div>
+
+     <h3>İki aylık dönem performansı</h3>
+     <div class="muted">
+      Her ürün için gerçekleşen satış / hedef ve hedef gerçekleşme yüzdesi gösterilir.
+      Döneme atanmamış haftalar bu tabloya dahil edilmez.
+     </div>
+
+     <div class="tablewrap">
+      <table>
+       <tr>
+        <th>Dönem</th>
+        <th>Hafta</th>
+        <th>Telvis<br>Gerçekleşen / Hedef</th>
+        <th>Ezeros<br>Gerçekleşen / Hedef</th>
+        <th>Sugvida<br>Gerçekleşen / Hedef</th>
+       </tr>
+       ${periodRows.join("")||"<tr><td colspan='5'>Henüz dönem verisi yok</td></tr>"}
+      </table>
+     </div>
+
+     <h3>Haftalık satış geçmişi</h3>
+     <div class="tablewrap">
+      <table>
+       <tr>
+        <th>Yıl/Hafta</th>
+        <th>Dönem</th>
+        <th>Telvis</th>
+        <th>Ezeros</th>
+        <th>Sugvida</th>
+       </tr>
+       ${rows.map(r=>`
+        <tr>
+         <td>${r.year}/${r.week}</td>
+         <td>${r.period?esc(names[Number(r.period)-1]||""):"Atanmadı"}</td>
+         <td>${fmt(r.telvis)}</td>
+         <td>${fmt(r.ezeros)}</td>
+         <td>${fmt(r.sugvida)}</td>
+        </tr>
+       `).join("")||"<tr><td colspan='5'>Henüz satış kaydı yok</td></tr>"}
+      </table>
+     </div>
+    </div>
+   `;
   }
+
+  $("performance").innerHTML=out||"Onaylı çalışan bulunamadı.";
+
+  $("totalTelvis").textContent=fmt(grand.telvis);
+  $("totalEzeros").textContent=fmt(grand.ezeros);
+  $("totalSugvida").textContent=fmt(grand.sugvida);
+
+  say("mainStatus","Performans verileri yüklendi.");
+
+ }catch(e){
+  say("mainStatus","Performans okunamadı ("+(e.code||"unknown")+"): "+e.message);
+ }
+}
+
   $("performance").innerHTML=out||"Onaylı çalışan bulunamadı.";$("totalTelvis").textContent=grand.telvis;$("totalEzeros").textContent=grand.ezeros;$("totalSugvida").textContent=grand.sugvida;say("mainStatus","Performans verileri yüklendi.");
  }catch(e){say("mainStatus","Performans okunamadı ("+(e.code||"unknown")+"): "+e.message);}
 }
