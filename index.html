@@ -642,7 +642,7 @@ async function calculateHalfYearBonus(){
   };
   const halfCache={targets:new Map(),weeks:new Map(),periodSettings:new Map()};
   for(const person of people){
-   const [ts,ws]=await Promise.all([getDocs(collection(db,"users",person.id,"targets")),getDocs(collection(db,"users",person.id,"weeks"))]);
+   const ws=await getDocs(collection(db,"users",person.id,"weeks"));
    for(let period=firstPeriod;period<=lastPeriod;period++){
     halfCache.targets.set(person.id+"|"+period,await getDoc(doc(db,"users",person.id,"targets",year+"-P"+period)));
     halfCache.weeks.set(person.id+"|"+period,ws);
