@@ -166,7 +166,7 @@
 </main>
 <script type="module">
 import{initializeApp}from"https://www.gstatic.com/firebasejs/13.4.0/firebase-app.js";
-import{getAuth,createUserWithEmailAndPassword,signInWithEmailAndPassword,sendPasswordResetEmail,signOut,onAuthStateChanged}from"https://www.gstatic.com/firebasejs/13.4.0/firebase-auth.js";
+import{getAuth,createUserWithEmailAndPassword,signInWithEmailAndPassword,sendPasswordResetEmail,signOut,deleteUser,onAuthStateChanged}from"https://www.gstatic.com/firebasejs/13.4.0/firebase-auth.js";
 import{getFirestore,collection,doc,setDoc,getDocs,getDoc,runTransaction,serverTimestamp,query,where}from"https://www.gstatic.com/firebasejs/13.4.0/firebase-firestore.js";
 const cfg={apiKey:"AIzaSyBa476SDb3Jg_Vr_hjH_1OJ-GR1zczNRCQ",authDomain:"neutec-performans-c483c.firebaseapp.com",projectId:"neutec-performans-c483c",storageBucket:"neutec-performans-c483c.firebasestorage.app",messagingSenderId:"476444856742",appId:"1:476444856742:web:c0d4d1937f29e56a1eff67"};
 const app=initializeApp(cfg),auth=getAuth(app),db=getFirestore(app),ADMIN="sxBOyqTTe3SxZK3EO85Cfb0DYfJ3", $=id=>document.getElementById(id);
@@ -177,13 +177,19 @@ async function register(){
  const name=$("newName").value.trim(),username=$("newUsername").value.trim().toLowerCase(),email=$("newEmail").value.trim(),pw=$("newPassword").value;
  if(name.length<2||!/^[a-z0-9._-]{3,24}$/.test(username)||!email.includes("@")||pw.length<6){say("authStatus","Bilgileri kontrol et. Kullanıcı adı 3-24 karakter, şifre en az 6 karakter olmalı.");return}
  registering=true;say("authStatus","Hesap oluşturuluyor...");
+ let createdUser=null;
  try{
   const cred=await createUserWithEmailAndPassword(auth,email,pw);
+  createdUser=cred.user;
   await setDoc(doc(db,"users",cred.user.uid),{name,username,createdAt:serverTimestamp(),status:"pending",role:"employee",active:false,employmentStartDate:new Date().toISOString().slice(0,10),employmentEndDate:null});
+  createdUser=null;
   registering=false;await authChanged(cred.user);
   say("authStatus","Kayıt oluşturuldu. Yönetici onayı bekleniyor.");
  }catch(e){
   registering=false;
+  if(createdUser){
+   try{await deleteUser(createdUser);}catch(cleanupError){}
+  }
   if(auth.currentUser)await signOut(auth);
   say("authStatus","Kayıt hatası ("+(e.code||"unknown")+"): "+e.message);
  }
