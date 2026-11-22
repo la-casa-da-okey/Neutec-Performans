@@ -1017,8 +1017,10 @@ $("assignYear").onchange=loadAssignWeeks;
   $("closePeriodButton").onclick=closePeriodGlobally;
   $("saveExpectedWeeks").onclick=saveExpectedWeeks;
   $("saveBonusSettings").onclick=saveBonusSettings;
+  $("calculateBonus").onclick=calculateBonus;
 $("closeYear").onchange=loadExpectedWeeks;
 $("closePeriod").onchange=loadExpectedWeeks;
+  $("bonusYear").value=new Date().getFullYear();
 $("year").value=new Date().getFullYear();$("targetYear").value=new Date().getFullYear();$("week").value=1;$("closeYear").value=new Date().getFullYear();
 onAuthStateChanged(auth,authChanged);
 </script>
