@@ -431,7 +431,32 @@ async function assignWeekToPeriod(){
  if(!admin())return;
 
  try{
-  const snap=await getDoc(doc(db,"bonusSettings","current"));
+  const ref=doc(db,"bonusSettings","current");
+  const data=await runTransaction(db,async(tx)=>{
+   const snap=await tx.get(ref);
+   if(!snap.exists())return null;
+   const current=snap.data();
+   const records=current.paidBonusRecords??[];
+   if(!Array.isArray(records))throw new Error("Ödeme kayıtları bozuk; otomatik temizlik yapılmadı.");
+   const cutoff=new Date();
+   cutoff.setFullYear(cutoff.getFullYear()-1);
+   const kept=records.filter(record=>{
+    if(!record||typeof record!=="object")return true;
+    let paidDate=record.paidAt?new Date(record.paidAt):null;
+    if(!paidDate||Number.isNaN(paidDate.getTime())){
+     const y=Number(record.year),p=Number(record.period);
+     if(Number.isInteger(y)&&Number.isInteger(p)&&p>=1&&p<=6){
+      const month=p*2;
+      paidDate=new Date(y,month,0,23,59,59,999);
+     }else return true;
+    }
+    return paidDate>=cutoff;
+   });
+   if(kept.length!==records.length){
+    tx.update(ref,{paidBonusRecords:kept,paidRecordsUpdatedAt:serverTimestamp()});
+   }
+   return current;
+  });
   const defaults={
    90:18000,
    95:30000,
@@ -442,14 +467,14 @@ async function assignWeekToPeriod(){
 
   const data=snap.exists()?snap.data():defaults;
 
-  $("bonus90").value=data.bonus90??defaults[90];
-  $("bonus95").value=data.bonus95??defaults[95];
-  $("bonus100").value=data.bonus100??defaults[100];
-  $("bonus110").value=data.bonus110??defaults[110];
-  $("bonus120").value=data.bonus120??defaults[120];
+  $("bonus90").value=data?.bonus90??defaults[90];
+  $("bonus95").value=data?.bonus95??defaults[95];
+  $("bonus100").value=data?.bonus100??defaults[100];
+  $("bonus110").value=data?.bonus110??defaults[110];
+  $("bonus120").value=data?.bonus120??defaults[120];
 
   say("bonusSettingsStatus",
-   snap.exists()?"Kayıtlı prim tarifesi yüklendi.":"Varsayılan prim tarifesi yüklendi.");
+   data?"Kayıtlı prim tarifesi yüklendi. Son 12 ay dışındaki ödeme kayıtları temizlendi.":"Varsayılan prim tarifesi yüklendi.");
  }catch(e){
   say("bonusSettingsStatus","Tarife yüklenemedi: "+e.message);
  }
