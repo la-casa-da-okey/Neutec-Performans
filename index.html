@@ -30,8 +30,7 @@
   <div><label for="employmentStartDate">İşe giriş tarihi</label><input id="employmentStartDate" type="date"></div>
   <div><label for="employmentEndDate">İşten ayrılış tarihi</label><input id="employmentEndDate" type="date"></div>
  </div>
- <label for="successorEmployee">Satış / hedef devredilecek çalışan</label>
- <select id="successorEmployee"><option value="">Devir yok</option></select>
+ <p class="muted">İşten ayrılan çalışanın ayrılış tarihi itibarıyla prim hakkı sona erer. Satış ve hedefleri başka çalışana aktarılmaz.</p>
  <button id="saveEmployeeLifecycle" class="secondary">Çalışan Bilgilerini Kaydet</button>
  <div id="lifecycleStatus" class="status"></div>
 </section>
@@ -276,14 +275,11 @@ async function loadEmployeeLifecycle(){
    return d.id!==ADMIN&&(p.status==="approved"||p.active===true||p.employmentEndDate);
   });
   const employeeSelect=$("lifecycleEmployee");
-  const successorSelect=$("successorEmployee");
   employeeSelect.innerHTML='<option value="">Çalışan seç</option>';
-  successorSelect.innerHTML='<option value="">Devir yok</option>';
   employees.forEach(d=>{
    const p=d.data();
    const label=p.name||p.username||d.id;
    const a=document.createElement("option");a.value=d.id;a.textContent=label;employeeSelect.appendChild(a);
-   const b=document.createElement("option");b.value=d.id;b.textContent=label;successorSelect.appendChild(b);
   });
  }catch(e){
   say("lifecycleStatus","Çalışan listesi yüklenemedi: "+e.message);
@@ -300,7 +296,6 @@ async function loadLifecycleEmployee(){
   const p=snap.data();
   $("employmentStartDate").value=p.employmentStartDate||"";
   $("employmentEndDate").value=p.employmentEndDate||"";
-  $("successorEmployee").value=p.successorUid||"";
   say("lifecycleStatus","Çalışan bilgileri yüklendi.");
  }catch(e){
   say("lifecycleStatus","Bilgiler yüklenemedi: "+e.message);
@@ -312,21 +307,18 @@ async function saveEmployeeLifecycle(){
  const uid=$("lifecycleEmployee").value;
  const start=$("employmentStartDate").value;
  const end=$("employmentEndDate").value;
- const successor=$("successorEmployee").value;
  if(!uid){say("lifecycleStatus","Önce çalışan seç.");return;}
  if(!start){say("lifecycleStatus","İşe giriş tarihi zorunludur.");return;}
  if(end&&end<start){say("lifecycleStatus","İşten ayrılış tarihi işe giriş tarihinden önce olamaz.");return;}
- if(successor===uid){say("lifecycleStatus","Çalışan kendisini devir alan kişi olarak seçemez.");return;}
  try{
   const patch={
    employmentStartDate:start,
    employmentEndDate:end||null,
-   successorUid:successor||null,
    lifecycleUpdatedAt:serverTimestamp(),
    lifecycleUpdatedBy:auth.currentUser.uid
   };
   await setDoc(doc(db,"users",uid),patch,{merge:true});
-  say("lifecycleStatus","İşe giriş / çıkış ve devir bilgileri kaydedildi.");
+  say("lifecycleStatus","İşe giriş / çıkış bilgileri kaydedildi.");
   await loadEmployeeLifecycle();
   $("lifecycleEmployee").value=uid;
   await loadLifecycleEmployee();
@@ -555,15 +547,10 @@ async function calculateHalfYearBonus(){
   const halfStart=year+"-"+(half===1?"01-01":"07-01");
   const halfEnd=year+"-"+(half===1?"06-30":"12-31");
   const people=usersSnap.docs.filter(d=>d.id!==ADMIN);
-  const byUid=new Map(people.map(d=>[d.id,{id:d.id,p:d.data()}]));
   const paid=settings.paidBonusRecords||[];
   const totals=new Map();
-  const visiting=new Set();
-  const addFor=(uid,root,depth=0)=>{
-   if(depth>20)throw new Error("Devir zincirinde döngü veya aşırı uzun bağlantı var.");
-   if(visiting.has(uid))throw new Error("Çalışan devir zincirinde döngü bulundu.");
-   const person=byUid.get(uid);if(!person)return;
-   visiting.add(uid);
+  const addFor=(uid,root)=>{
+   const person=people.find(d=>d.id===uid);if(!person)return;
    const target=totals.get(root)||{actual:{telvis:0,ezeros:0,sugvida:0},target:{telvis:0,ezeros:0,sugvida:0},paid:{telvis:0,ezeros:0,sugvida:0},missing:[]};
    totals.set(root,target);
    const p=person.p;
@@ -585,8 +572,15 @@ async function calculateHalfYearBonus(){
     const setting=halfCache.periodSettings.get(periodId);
     if(!setting||!setting.exists()||!Array.isArray(setting.data().expectedWeeks)){target.missing.push(names[period-1]+" beklenen haftaları");return;}
     const expected=setting.data().expectedWeeks.map(Number);
+    if(!expected.length||expected.some(n=>!Number.isInteger(n)||n<1||n>53)||new Set(expected).size!==expected.length){
+     target.missing.push(names[period-1]+" beklenen hafta listesi geçersiz veya tekrarlı");continue;
+    }
     const docs=w?.docs||[];
     const periodDocs=docs.filter(z=>Number(z.data().year)===year&&Number(z.data().period)===period);
+    const weekNumbers=periodDocs.map(z=>Number(z.data().week));
+    if(weekNumbers.some((n,i)=>weekNumbers.indexOf(n)!==i)){
+     target.missing.push((p.name||uid)+" · "+names[period-1]+" tekrarlanan hafta kaydı");continue;
+    }
     const byWeek=new Map(periodDocs.map(z=>[Number(z.data().week),z.data()]));
     expected.forEach(n=>{
      const d=byWeek.get(n);
@@ -596,14 +590,6 @@ async function calculateHalfYearBonus(){
     const pr=paid.find(x=>x.uid===uid&&Number(x.year)===year&&Number(x.period)===period);
     if(pr)products.forEach(x=>target.paid[x.key]+=Number(pr[x.key]||0));
    }
-   // Add predecessor records into the current active employee's S1/S2 total.
-   const predecessors=people.filter(d=>d.data().successorUid===uid);
-   for(const predecessor of predecessors){
-    const predecessorId=predecessor.id;
-    if(visiting.has(predecessorId))throw new Error("Çalışan devir zincirinde döngü bulundu.");
-    addFor(predecessorId,root,depth+1);
-   }
-   visiting.delete(uid);
    totals.set(root,target);
   };
   const halfCache={targets:new Map(),weeks:new Map(),periodSettings:new Map()};
@@ -626,7 +612,6 @@ async function calculateHalfYearBonus(){
    if(p.status!=="approved"&&p.active!==true)continue;
    const hire=p.employmentStartDate||(p.createdAt?.toDate?p.createdAt.toDate().toISOString().slice(0,10):"");
    if(!hire||hire>halfEnd)continue;
-   visiting.clear();
    addFor(uid,uid);
    const d=totals.get(uid);
    if(!d)continue;
@@ -640,7 +625,7 @@ async function calculateHalfYearBonus(){
     const net=Math.max(0,gross-d.paid[x.key]);total+=net;
     rows+=`<tr><td>${x.name}</td><td>${d.actual[x.key].toLocaleString("tr-TR")} / ${d.target[x.key].toLocaleString("tr-TR")}</td><td>%${pct[x.key].toFixed(1).replace(".",",")}</td><td>${Math.round(gross).toLocaleString("tr-TR")} TL</td><td>${Math.round(d.paid[x.key]).toLocaleString("tr-TR")} TL</td><td>${Math.round(net).toLocaleString("tr-TR")} TL</td></tr>`;
    });
-   html+=`<div class="person"><b>${esc(p.name||p.username||"Çalışan")}</b><div class="muted">Altı aylık satış/hedef toplamı, devir zinciri dahil. Brüt primden aynı yarıyılda ödenmiş iki aylık primler düşülmüştür.</div><div class="tablewrap"><table><tr><th>Ürün</th><th>Satış / Hedef</th><th>Gerçekleşme</th><th>Brüt prim</th><th>Ödenen 2 aylık</th><th>Net S1/S2</th></tr>${rows}</table></div><p><b>Net altı aylık prim: ${Math.round(Math.max(0,total)).toLocaleString("tr-TR")} TL</b></p>${gate?"":"<p class='muted'>En az bir ürün %75 altında; global prim koşulu sağlanmadı.</p>"}</div>`;
+   html+=`<div class="person"><b>${esc(p.name||p.username||"Çalışan")}</b><div class="muted">Çalışanın kendi satış/hedef toplamı. Ayrılan çalışanların verileri devredilmez. Brüt primden aynı yarıyılda ödenmiş iki aylık primler düşülmüştür.</div><div class="tablewrap"><table><tr><th>Ürün</th><th>Satış / Hedef</th><th>Gerçekleşme</th><th>Brüt prim</th><th>Ödenen 2 aylık</th><th>Net S1/S2</th></tr>${rows}</table></div><p><b>Net altı aylık prim: ${Math.round(Math.max(0,total)).toLocaleString("tr-TR")} TL</b></p>${gate?"":"<p class='muted'>En az bir ürün %75 altında; global prim koşulu sağlanmadı.</p>"}</div>`;
   }
   $("halfYearResults").innerHTML=html||"Hesaplanacak çalışan bulunamadı.";
  }catch(e){say("halfYearResults","Altı aylık hesaplama hatası: "+e.message);}
