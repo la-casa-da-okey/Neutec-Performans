@@ -565,13 +565,14 @@ async function calculateHalfYearBonus(){
    const person=byUid.get(uid);if(!person)return;
    visiting.add(uid);
    const target=totals.get(root)||{actual:{telvis:0,ezeros:0,sugvida:0},target:{telvis:0,ezeros:0,sugvida:0},paid:{telvis:0,ezeros:0,sugvida:0},missing:[]};
+   totals.set(root,target);
    const p=person.p;
    const hire=p.employmentStartDate||(p.createdAt?.toDate?p.createdAt.toDate().toISOString().slice(0,10):"");
    const leave=p.employmentEndDate||"";
    for(let period=firstPeriod;period<=lastPeriod;period++){
     const start=year+"-"+String((period-1)*2+1).padStart(2,"0")+"-01";
     const end=new Date(Date.UTC(year,period*2,0)).toISOString().slice(0,10);
-    if(!hire||hire>end|| (leave&&leave<start))continue;
+    if(!hire||hire>start||(leave&&leave<end))continue;
     const periodId=year+"-P"+period;
     // For S1/S2, include only full two-month periods in which this employee was employed.
     const targetSnapCache=halfCache.targets;
@@ -595,8 +596,13 @@ async function calculateHalfYearBonus(){
     const pr=paid.find(x=>x.uid===uid&&Number(x.year)===year&&Number(x.period)===period);
     if(pr)products.forEach(x=>target.paid[x.key]+=Number(pr[x.key]||0));
    }
-   const next=p.successorUid;
-   if(next)addFor(next,root,depth+1);
+   // Add predecessor records into the current active employee's S1/S2 total.
+   const predecessors=people.filter(d=>d.data().successorUid===uid);
+   for(const predecessor of predecessors){
+    const predecessorId=predecessor.id;
+    if(visiting.has(predecessorId))throw new Error("Çalışan devir zincirinde döngü bulundu.");
+    addFor(predecessorId,root,depth+1);
+   }
    visiting.delete(uid);
    totals.set(root,target);
   };
