@@ -283,6 +283,69 @@ async function assignWeekToPeriod(){
   say("assignStatus","Atama başarısız: "+e.message);
  }
 }
+  
+async function loadExpectedWeeks(){
+ if(!admin())return;
+
+ const year=Number($("closeYear").value);
+ const period=Number($("closePeriod").value);
+ if(!Number.isInteger(year)||year<2020||year>2100)return;
+
+ try{
+  const id=year+"-P"+period;
+  const snap=await getDoc(doc(db,"periodSettings",id));
+  const weeks=snap.exists()?snap.data().expectedWeeks:[];
+
+  for(let i=1;i<=8;i++){
+   $("expectedWeek"+i).value=weeks[i-1]??"";
+  }
+
+  say("expectedWeeksStatus",
+   snap.exists()?"Kaydedilmiş hafta listesi yüklendi.":"Bu dönem için henüz hafta listesi yok.");
+ }catch(e){
+  say("expectedWeeksStatus","Hafta listesi okunamadı: "+e.message);
+ }
+}
+
+async function saveExpectedWeeks(){
+ if(!admin())return;
+
+ const year=Number($("closeYear").value);
+ const period=Number($("closePeriod").value);
+
+ const weeks=[];
+ for(let i=1;i<=8;i++){
+  const value=$("expectedWeek"+i).value.trim();
+  if(value!=="")weeks.push(Number(value));
+ }
+
+ if(!Number.isInteger(year)||year<2020||year>2100||period<1||period>6){
+  say("expectedWeeksStatus","Yıl veya dönem seçimini kontrol et.");
+  return;
+ }
+
+ if(weeks.length===0||weeks.some(w=>!Number.isInteger(w)||w<1||w>53)||new Set(weeks).size!==weeks.length){
+  say("expectedWeeksStatus","En az bir geçerli hafta gir. Hafta numaraları tekrarlanmamalı.");
+  return;
+ }
+
+ try{
+  const id=year+"-P"+period;
+
+  await setDoc(doc(db,"periodSettings",id),{
+   year:year,
+   period:period,
+   expectedWeeks:weeks,
+   updatedAt:serverTimestamp(),
+   updatedBy:auth.currentUser.uid
+  });
+
+  say("expectedWeeksStatus","Hafta listesi kaydedildi: "+weeks.join(", "));
+ }catch(e){
+  say("expectedWeeksStatus","Kaydedilemedi: "+e.message);
+ }
+}
+
 async function closePeriodGlobally(){
  if(!admin()){
   say("closePeriodStatus","Bu işlem için yönetici yetkisi gerekli.");
