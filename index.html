@@ -202,6 +202,7 @@ async function authChanged(u){
   if(!ok()){say("mainStatus","Hesabın yönetici onayı bekliyor. Onaylandıktan sonra yeniden giriş yap.");$("performance").textContent="Hesap onay bekliyor.";return;}
   $("overviewSection").classList.remove("hidden");
    $("bonusSection").classList.remove("hidden");
+   $("bonusSettings").classList.toggle("hidden",!admin());
   $("targetSection").classList.remove("hidden");
   $("performanceSection").classList.remove("hidden");
    $("myPerformanceSection").classList.remove("hidden");
