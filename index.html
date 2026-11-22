@@ -12,11 +12,11 @@
 <body>
 <header><h1>NEUTEC PERFORMANS</h1><p>Haftalık Satış ve Performans Takibi</p></header>
 <main>
-<section class="card"><h2>Genel Performans</h2><div class="grid3"><div class="metric">Telvis<strong id="totalTelvis">0</strong>Toplam satış</div><div class="metric">Ezeros<strong id="totalEzeros">0</strong>Toplam satış</div><div class="metric">Sugvida<strong id="totalSugvida">0</strong>Toplam satış</div></div><div id="mainStatus" class="status">Giriş bekleniyor.</div></section>
+<section class="card hidden" id="overviewSection"><h2>Genel Performans</h2><div class="grid3"><div class="metric">Telvis<strong id="totalTelvis">0</strong>Toplam satış</div><div class="metric">Ezeros<strong id="totalEzeros">0</strong>Toplam satış</div><div class="metric">Sugvida<strong id="totalSugvida">0</strong>Toplam satış</div></div><div id="mainStatus" class="status">Giriş bekleniyor.</div></section>
 <section class="card hidden" id="adminPanel"><h2>Yönetici · Kullanıcı Onayları</h2><div id="pendingUsers">Yükleniyor...</div><div id="adminStatus" class="status"></div></section>
-<section class="card"><h2>İki Aylık Hedefler</h2><div class="row"><div><label for="targetYear">Hedef yılı</label><input id="targetYear" type="number"></div><div><label for="period">Dönem</label><select id="period"><option value="1">Ocak–Şubat</option><option value="2">Mart–Nisan</option><option value="3">Mayıs–Haziran</option><option value="4">Temmuz–Ağustos</option><option value="5">Eylül–Ekim</option><option value="6">Kasım–Aralık</option></select></div></div><label for="targetTelvis">Telvis hedefi</label><input id="targetTelvis" type="number" min="0" value="0"><label for="targetEzeros">Ezeros hedefi</label><input id="targetEzeros" type="number" min="0" value="0"><label for="targetSugvida">Sugvida hedefi</label><input id="targetSugvida" type="number" min="0" value="0"><button id="saveTarget">Hedefleri Kaydet</button><div id="targetStatus" class="status"></div></section>
-<section class="card"><h2>Çalışan Performansları</h2><div id="performance">Giriş yapıldığında yüklenecek.</div></section>
-<section class="card"><h2>Haftalık Satış Girişi</h2><div class="row"><div><label for="year">Yıl</label><input id="year" type="number"></div><div><label for="week">Hafta</label><input id="week" type="number" min="1" max="53"></div></div><label for="telvis">Telvis</label><input id="telvis" type="number" min="0" value="0"><label for="ezeros">Ezeros</label><input id="ezeros" type="number" min="0" value="0"><label for="sugvida">Sugvida</label><input id="sugvida" type="number" min="0" value="0"><button id="saveWeek">Haftalık Verileri Kaydet</button><div id="saveStatus" class="status"></div></section>
+<section class="card hidden" id="targetSection"><h2>İki Aylık Hedefler</h2><div class="row"><div><label for="targetYear">Hedef yılı</label><input id="targetYear" type="number"></div><div><label for="period">Dönem</label><select id="period"><option value="1">Ocak–Şubat</option><option value="2">Mart–Nisan</option><option value="3">Mayıs–Haziran</option><option value="4">Temmuz–Ağustos</option><option value="5">Eylül–Ekim</option><option value="6">Kasım–Aralık</option></select></div></div><label for="targetTelvis">Telvis hedefi</label><input id="targetTelvis" type="number" min="0" value="0"><label for="targetEzeros">Ezeros hedefi</label><input id="targetEzeros" type="number" min="0" value="0"><label for="targetSugvida">Sugvida hedefi</label><input id="targetSugvida" type="number" min="0" value="0"><button id="saveTarget">Hedefleri Kaydet</button><div id="targetStatus" class="status"></div></section>
+<section class="card hidden" id="performanceSection"><h2>Çalışan Performansları</h2><div id="performance">Giriş yapıldığında yüklenecek.</div></section>
+<section class="card hidden" id="weekSection"><h2>Haftalık Satış Girişi</h2><div class="row"><div><label for="year">Yıl</label><input id="year" type="number"></div><div><label for="week">Hafta</label><input id="week" type="number" min="1" max="53"></div></div><label for="telvis">Telvis</label><input id="telvis" type="number" min="0" value="0"><label for="ezeros">Ezeros</label><input id="ezeros" type="number" min="0" value="0"><label for="sugvida">Sugvida</label><input id="sugvida" type="number" min="0" value="0"><button id="saveWeek">Haftalık Verileri Kaydet</button><div id="saveStatus" class="status"></div></section>
 <section class="card"><h2>Hesap / Giriş</h2><div id="loggedArea" class="hidden"><div id="welcome"></div><button id="logoutButton" class="secondary">Çıkış Yap</button></div><div id="loginArea"><h3>Giriş Yap</h3><label for="email">E-posta</label><input id="email" type="email" autocomplete="username"><label for="password">Şifre</label><input id="password" type="password" autocomplete="current-password"><div class="row"><button id="loginButton">Giriş Yap</button><button id="resetButton" class="secondary">Şifremi Unuttum</button></div><hr style="border:0;border-top:1px solid #2a3a50;margin:16px 0"><h3>Yeni Çalışan Kaydı</h3><p class="muted">Gerçek e-posta adresinle kayıt ol. Halit Bey onaylamadan uygulama verilerine erişemezsin.</p><label for="newName">Ad Soyad</label><input id="newName" autocomplete="name"><label for="newUsername">Kullanıcı adı</label><input id="newUsername" autocomplete="username"><label for="newEmail">Gerçek e-posta</label><input id="newEmail" type="email" autocomplete="email"><label for="newPassword">Şifre (en az 6 karakter)</label><input id="newPassword" type="password" autocomplete="new-password"><button id="registerButton">Kayıt Oluştur</button></div><div id="authStatus" class="status"></div></section>
 </main>
 <script type="module">
@@ -40,32 +40,46 @@ async function register(){
  }catch(e){
   registering=false;
   if(auth.currentUser)await signOut(auth);
-  say("authStatus","Kayıt hatası: "+e.message);
+  say("authStatus","Kayıt hatası ("+(e.code||"unknown")+"): "+e.message);
  }
 }
 async function login(){
  const e=$("email").value.trim(),p=$("password").value;
  if(!e||!p){say("authStatus","E-posta ve şifre gir.");return}
  try{await signInWithEmailAndPassword(auth,e,p);say("authStatus","Giriş başarılı.");}
- catch(e){say("authStatus","Giriş başarısız. Eski yönetici hesabı için berkaycakir85@neutec.local adresini ve mevcut şifresini kullan.");}
+ catch(e){say("authStatus","Giriş başarısız ("+(e.code||"unknown")+"): "+e.message);}
 }
 async function reset(){
  const e=$("email").value.trim();if(!e){say("authStatus","Önce e-posta adresini gir.");return}
  try{await sendPasswordResetEmail(auth,e);say("authStatus","Şifre sıfırlama bağlantısı gönderildi.");}
- catch(x){say("authStatus","İşlem başarısız: "+x.message);}
+ catch(x){say("authStatus","İşlem başarısız ("+(x.code||"unknown")+"): "+x.message);}
 }
 async function logout(){await signOut(auth);}
 async function authChanged(u){
  if(registering)return;
- profile=null;$("loggedArea").classList.toggle("hidden",!u);$("loginArea").classList.toggle("hidden",!!u);$("adminPanel").classList.toggle("hidden",!admin());
+ profile=null;
+ $("loggedArea").classList.toggle("hidden",!u);
+ $("loginArea").classList.toggle("hidden",!!u);
+ $("adminPanel").classList.toggle("hidden",!admin());
+ $("overviewSection").classList.add("hidden");
+ $("targetSection").classList.add("hidden");
+ $("performanceSection").classList.add("hidden");
+ $("weekSection").classList.add("hidden");
  if(!u){$("performance").textContent="Giriş yapıldığında yüklenecek.";say("mainStatus","Giriş bekleniyor.");return;}
  try{
   const s=await getDoc(doc(db,"users",u.uid));profile=s.exists()?s.data():null;
   if(!admin()&&!profile){await signOut(auth);say("authStatus","Kullanıcı profili bulunamadı.");return;}
   $("welcome").textContent=(profile?.name||profile?.username||u.email)+(admin()?" · Yönetici":"");
   if(!ok()){say("mainStatus","Hesabın yönetici onayı bekliyor. Onaylandıktan sonra yeniden giriş yap.");$("performance").textContent="Hesap onay bekliyor.";return;}
-  say("mainStatus","Veriler yükleniyor...");if(admin())await pending();await loadTarget();await performance();
- }catch(e){say("mainStatus","Profil/veri okunamadı: "+e.message);}
+  $("overviewSection").classList.remove("hidden");
+  $("targetSection").classList.remove("hidden");
+  $("performanceSection").classList.remove("hidden");
+  $("weekSection").classList.remove("hidden");
+  say("mainStatus","Veriler yükleniyor...");
+  if(admin())await pending();
+  await loadTarget();
+  await performance();
+ }catch(e){say("mainStatus","Profil/veri okunamadı ("+(e.code||"unknown")+"): "+e.message);}
 }
 async function pending(){
  try{
@@ -114,7 +128,7 @@ async function performance(){
    out+=`<div class="card"><b>${esc(p.name||p.username||"Çalışan")}</b><div class="grid3"><div class="metric">Telvis<strong>${t.telvis}</strong></div><div class="metric">Ezeros<strong>${t.ezeros}</strong></div><div class="metric">Sugvida<strong>${t.sugvida}</strong></div></div><h3>Hedefler</h3><div class="tablewrap"><table><tr><th>Dönem</th><th>Telvis</th><th>Ezeros</th><th>Sugvida</th></tr>${tr.join("")||"<tr><td colspan=4>Hedef yok</td></tr>"}</table></div><h3>Haftalık satış geçmişi</h3><div class="tablewrap"><table><tr><th>Yıl/Hafta</th><th>Telvis</th><th>Ezeros</th><th>Sugvida</th></tr>${rows.map(r=>`<tr><td>${r.year}/${r.week}</td><td>${r.telvis||0}</td><td>${r.ezeros||0}</td><td>${r.sugvida||0}</td></tr>`).join("")}</table></div></div>`;
   }
   $("performance").innerHTML=out||"Onaylı çalışan bulunamadı.";$("totalTelvis").textContent=grand.telvis;$("totalEzeros").textContent=grand.ezeros;$("totalSugvida").textContent=grand.sugvida;say("mainStatus","Performans verileri yüklendi.");
- }catch(e){say("mainStatus","Performans okunamadı: "+e.message);}
+ }catch(e){say("mainStatus","Performans okunamadı ("+(e.code||"unknown")+"): "+e.message);}
 }
 $("registerButton").onclick=register;$("loginButton").onclick=login;$("resetButton").onclick=reset;$("logoutButton").onclick=logout;$("saveTarget").onclick=saveTarget;$("saveWeek").onclick=saveWeek;$("targetYear").onchange=loadTarget;$("period").onchange=loadTarget;
 $("year").value=new Date().getFullYear();$("targetYear").value=new Date().getFullYear();$("week").value=1;
