@@ -150,6 +150,46 @@ async function loadAssignEmployees(){
   say("assignStatus","Çalışanlar yüklenemedi: "+e.message);
  }
 }
+  
+async function loadAssignWeeks(){
+ const uid=$("assignEmployee").value;
+ const year=+$("assignYear").value;
+ const el=$("assignWeek");
+
+ el.innerHTML='<option value="">Hafta seç</option>';
+ if(!uid||!year)return;
+
+ try{
+  const s=await getDocs(collection(db,"users",uid,"weeks"));
+  const weeks=[];
+
+  s.forEach(d=>{
+   const x=d.data();
+   if(Number(x.year)===year){
+    weeks.push({id:d.id,week:Number(x.week),data:x});
+   }
+  });
+
+  weeks.sort((a,b)=>a.week-b.week);
+
+  weeks.forEach(x=>{
+   const o=document.createElement("option");
+   o.value=x.id;
+   o.textContent="Hafta "+x.week+
+    " · Telvis "+(x.data.telvis||0)+
+    " · Ezeros "+(x.data.ezeros||0)+
+    " · Sugvida "+(x.data.sugvida||0);
+   el.appendChild(o);
+  });
+
+  if(!weeks.length){
+   el.innerHTML='<option value="">Bu yılda kayıtlı hafta yok</option>';
+  }
+ }catch(e){
+  say("assignStatus","Haftalar yüklenemedi: "+e.message);
+ }
+}
+
 
 async function pending(){
  try{
@@ -261,6 +301,8 @@ async function myPerformance(){
 }
 
 $("registerButton").onclick=register;$("loginButton").onclick=login;$("resetButton").onclick=reset;$("logoutButton").onclick=logout;$("saveTarget").onclick=saveTarget;$("saveWeek").onclick=saveWeek;$("targetYear").onchange=loadTarget;$("period").onchange=loadTarget;
+  $("assignEmployee").onchange=loadAssignWeeks;
+$("assignYear").onchange=loadAssignWeeks;
 $("year").value=new Date().getFullYear();$("targetYear").value=new Date().getFullYear();$("week").value=1;
 onAuthStateChanged(auth,authChanged);
 </script>
