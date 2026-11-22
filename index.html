@@ -246,7 +246,7 @@ async function loadAssignEmployees(){
 
   s.forEach(d=>{
    const p=d.data();
-   if(p.status==="approved"||p.active===true){
+   if(d.id!==ADMIN&&(p.status==="approved"||p.active===true)){
     const o=document.createElement("option");
     o.value=d.id;
     o.textContent=p.name||p.username||d.id;
@@ -452,6 +452,12 @@ async function calculateBonus(){
     const d=w.data();
     return Number(d.year)===year&&Number(d.period)===period;
    });
+   const weekNumbers=periodWeeks.map(w=>Number(w.data().week));
+   const duplicateWeeks=weekNumbers.filter((w,i)=>weekNumbers.indexOf(w)!==i);
+   if(duplicateWeeks.length){
+    html+=`<div class="person"><b>${esc(p.name||p.username||"Çalışan")}</b><p class="muted">Aynı hafta numarasıyla birden fazla dönem kaydı bulundu: ${[...new Set(duplicateWeeks)].join(", ")}. Önce kayıtları düzelt.</p></div>`;
+    continue;
+   }
    const byWeek=new Map(periodWeeks.map(w=>[Number(w.data().week),w.data()]));
    const missingWeeks=expectedWeeks.filter(w=>!byWeek.has(w));
    const invalidWeeks=expectedWeeks.filter(w=>{
@@ -633,7 +639,7 @@ async function closePeriodGlobally(){
   for(const u of users.docs){
    const p=u.data();
 
-   if(p.status!=="approved"&&p.active!==true)continue;
+   if(u.id===ADMIN|| (p.status!=="approved"&&p.active!==true))continue;
 
    employeeCount++;
 
@@ -750,7 +756,7 @@ async function performance(){
   for(const u of us.docs){
    const p=u.data();
 
-   if(p.status==="pending"||p.status==="rejected"||(p.active===false&&!admin()))continue;
+   if(u.id===ADMIN||p.status==="pending"||p.status==="rejected"||(p.active===false&&!admin()))continue;
 
    const [ws,ts]=await Promise.all([
     getDocs(collection(db,"users",u.id,"weeks")),
