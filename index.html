@@ -192,7 +192,8 @@ import{getFirestore,collection,doc,setDoc,getDocs,getDoc,runTransaction,serverTi
 const cfg={apiKey:"AIzaSyBa476SDb3Jg_Vr_hjH_1OJ-GR1zczNRCQ",authDomain:"neutec-performans-c483c.firebaseapp.com",projectId:"neutec-performans-c483c",storageBucket:"neutec-performans-c483c.firebasestorage.app",messagingSenderId:"476444856742",appId:"1:476444856742:web:c0d4d1937f29e56a1eff67"};
 const app=initializeApp(cfg),auth=getAuth(app),db=getFirestore(app),ADMIN="sxBOyqTTe3SxZK3EO85Cfb0DYfJ3", $=id=>document.getElementById(id);
 const names=["Ocak–Şubat","Mart–Nisan","Mayıs–Haziran","Temmuz–Ağustos","Eylül–Ekim","Kasım–Aralık"];let profile=null,registering=false;
-const admin=()=>auth.currentUser?.uid===ADMIN,ok=()=>{if(admin())return true;if(!(profile?.status==="approved"||profile?.active===true))return false;const end=profile?.employmentEndDate||"";return !end||new Date().toISOString().slice(0,10)<=end;},say=(id,t)=>$(id).textContent=t;
+const localDate=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");};
+const admin=()=>auth.currentUser?.uid===ADMIN,ok=()=>{if(admin())return true;if(!(profile?.status==="approved"||profile?.active===true))return false;const end=profile?.employmentEndDate||"";return !end||localDate()<=end;},say=(id,t)=>$(id).textContent=t;
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 async function register(){
  const name=$("newName").value.trim(),username=$("newUsername").value.trim().toLowerCase(),email=$("newEmail").value.trim(),pw=$("newPassword").value;
@@ -246,7 +247,7 @@ async function authChanged(u){
   const s=await getDoc(doc(db,"users",u.uid));profile=s.exists()?s.data():null;
   if(!admin()&&!profile){await signOut(auth);say("authStatus","Kullanıcı profili bulunamadı.");return;}
   $("welcome").textContent=(profile?.name||profile?.username||u.email)+(admin()?" · Yönetici":"");
-  if(!ok()){const ended=profile?.employmentEndDate&&new Date().toISOString().slice(0,10)>profile.employmentEndDate;say("mainStatus",ended?"İşten ayrılış tarihin geçtiği için uygulama ve prim işlemlerine erişimin kapatıldı.":"Hesabın yönetici onayı bekliyor. Onaylandıktan sonra yeniden giriş yap.");$("performance").textContent=ended?"İşten ayrılış nedeniyle erişim kapalı.":"Hesap onay bekliyor.";return;}
+  if(!ok()){const ended=profile?.employmentEndDate&&localDate()>profile.employmentEndDate;say("mainStatus",ended?"İşten ayrılış tarihin geçtiği için uygulama ve prim işlemlerine erişimin kapatıldı.":"Hesabın yönetici onayı bekliyor. Onaylandıktan sonra yeniden giriş yap.");$("performance").textContent=ended?"İşten ayrılış nedeniyle erişim kapalı.":"Hesap onay bekliyor.";return;}
   $("overviewSection").classList.remove("hidden");
    $("bonusSection").classList.remove("hidden");
    $("bonusSettings").classList.toggle("hidden",!admin());
