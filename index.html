@@ -483,7 +483,7 @@ async function calculateBonus(){
   if(expectedWeeks.some(w=>!Number.isInteger(w)||w<1||w>53)||new Set(expectedWeeks).size!==expectedWeeks.length){say("bonusResults","Beklenen hafta listesi geçersiz.");return;}
   const products=[{key:"telvis",name:"Telvis",rate:.40},{key:"ezeros",name:"Ezeros",rate:.35},{key:"sugvida",name:"Sugvida",rate:.25}];
   const users=admin()?await getDocs(collection(db,"users")):null;
-  const employees=admin()?users.docs.filter(u=>{const p=u.data();return u.id!==ADMIN&&(p.status==="approved"||p.active===true);}):[{id:auth.currentUser.uid,data:()=>profile||{}}];
+  const employees=admin()?users.docs.filter(u=>{const p=u.data(),end=p.employmentEndDate||"";return u.id!==ADMIN&&(p.status==="approved"||p.active===true)&&(!end||localDate()<=end);}):[{id:auth.currentUser.uid,data:()=>profile||{}}];
   const paid=(settings.paidBonusRecords||[]);
   let html="";
   for(const employee of employees){
@@ -605,7 +605,7 @@ async function calculateHalfYearBonus(){
   }
   const roots=people.filter(d=>{
    const p=d.data(),end=p.employmentEndDate||"";
-   return !end||end>=halfEnd;
+   return (!end||localDate()<=end)&&(p.status==="approved"||p.active===true);
   });
   let html="";
   for(const rootDoc of roots){
