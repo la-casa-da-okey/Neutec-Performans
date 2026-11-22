@@ -93,6 +93,7 @@ async function authChanged(u){
   if(admin())await pending();
   await loadTarget();
   await performance();
+   await myPerformance();
  }catch(e){say("mainStatus","Profil/veri okunamadı ("+(e.code||"unknown")+"): "+e.message);}
 }
 async function pending(){
