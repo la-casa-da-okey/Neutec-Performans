@@ -139,6 +139,11 @@
   </div>
 
   <button id="saveBonusSettings" class="secondary">Prim Tarifesini Kaydet</button>
+  <hr>
+  <h3>Ödeme Geçmişi Temizliği</h3>
+  <p class="muted">Yalnızca son 12 aydan daha eski prim ödeme kayıtları silinir. Satış, hedef ve çalışan verileri etkilenmez. Temizlik yönetici tarafından elle başlatılır.</p>
+  <button id="cleanBonusHistory" class="secondary">12 Aydan Eski Ödemeleri Temizle</button>
+  <div id="bonusCleanupStatus" class="status"></div>
   <div id="bonusSettingsStatus" class="status"></div>
 </div>
   <h2>İki Aylık Prim Hesaplama</h2>
@@ -429,55 +434,58 @@ async function assignWeekToPeriod(){
 }
   async function loadBonusSettings(){
  if(!admin())return;
-
  try{
-  const ref=doc(db,"bonusSettings","current");
-  const data=await runTransaction(db,async(tx)=>{
+  const snap=await getDoc(doc(db,"bonusSettings","current"));
+  const data=snap.exists()?snap.data():{};
+  const defaults={90:18000,95:30000,100:48000,110:54000,120:60000};
+  $("bonus90").value=data.bonus90??defaults[90];
+  $("bonus95").value=data.bonus95??defaults[95];
+  $("bonus100").value=data.bonus100??defaults[100];
+  $("bonus110").value=data.bonus110??defaults[110];
+  $("bonus120").value=data.bonus120??defaults[120];
+  say("bonusSettingsStatus",snap.exists()?"Kayıtlı prim tarifesi yüklendi.":"Varsayılan prim tarifesi yüklendi.");
+ }catch(e){
+  say("bonusSettingsStatus","Tarife yüklenemedi: "+e.message);
+ }
+}
+
+async function cleanOldBonusHistory(){
+ if(!admin())return;
+ if(!confirm("Son 12 aydan daha eski prim ödeme kayıtları kalıcı olarak silinecek. Satış ve hedef verileri etkilenmeyecek. Devam edilsin mi?"))return;
+ const ref=doc(db,"bonusSettings","current");
+ try{
+  say("bonusCleanupStatus","Ödeme geçmişi kontrol ediliyor...");
+  const removed=await runTransaction(db,async(tx)=>{
    const snap=await tx.get(ref);
-   if(!snap.exists())return null;
-   const current=snap.data();
-   const records=current.paidBonusRecords??[];
-   if(!Array.isArray(records))throw new Error("Ödeme kayıtları bozuk; otomatik temizlik yapılmadı.");
+   if(!snap.exists())return 0;
+   const data=snap.data();
+   const records=data.paidBonusRecords??[];
+   if(!Array.isArray(records))throw new Error("Ödeme kayıtları dizisi bozuk. Güvenlik için hiçbir kayıt silinmedi.");
    const cutoff=new Date();
    cutoff.setFullYear(cutoff.getFullYear()-1);
    const kept=records.filter(record=>{
     if(!record||typeof record!=="object")return true;
     let paidDate=record.paidAt?new Date(record.paidAt):null;
     if(!paidDate||Number.isNaN(paidDate.getTime())){
-     const y=Number(record.year),p=Number(record.period);
-     if(Number.isInteger(y)&&Number.isInteger(p)&&p>=1&&p<=6){
-      const month=p*2;
-      paidDate=new Date(y,month,0,23,59,59,999);
-     }else return true;
+     const year=Number(record.year),period=Number(record.period);
+     if(Number.isInteger(year)&&Number.isInteger(period)&&period>=1&&period<=6){
+      paidDate=new Date(year,period*2,0,23,59,59,999);
+     }else{
+      return true;
+     }
     }
     return paidDate>=cutoff;
    });
-   if(kept.length!==records.length){
-    tx.update(ref,{paidBonusRecords:kept,paidRecordsUpdatedAt:serverTimestamp()});
-   }
-   return current;
+   const count=records.length-kept.length;
+   if(count>0)tx.update(ref,{paidBonusRecords:kept,paidRecordsUpdatedAt:serverTimestamp()});
+   return count;
   });
-  const defaults={
-   90:18000,
-   95:30000,
-   100:48000,
-   110:54000,
-   120:60000
-  };
-
-  $("bonus90").value=data?.bonus90??defaults[90];
-  $("bonus95").value=data?.bonus95??defaults[95];
-  $("bonus100").value=data?.bonus100??defaults[100];
-  $("bonus110").value=data?.bonus110??defaults[110];
-  $("bonus120").value=data?.bonus120??defaults[120];
-
-  say("bonusSettingsStatus",
-   data?"Kayıtlı prim tarifesi yüklendi. Son 12 ay dışındaki ödeme kayıtları temizlendi.":"Varsayılan prim tarifesi yüklendi.");
+  say("bonusCleanupStatus",removed>0?removed+" eski ödeme kaydı silindi. Son 12 ayın kayıtları korundu.":"Silinmesi gereken eski ödeme kaydı bulunamadı.");
  }catch(e){
-  say("bonusSettingsStatus","Tarife yüklenemedi: "+e.message);
+  say("bonusCleanupStatus","Temizlik yapılamadı: "+e.message);
  }
 }
-  function bonusTier(percent,settings){
+function bonusTier(percent,settings){
  if(percent<90)return 0;
  if(percent>=120)return settings.bonus120;
  if(percent>=110)return settings.bonus110;
@@ -1224,6 +1232,7 @@ $("assignYear").onchange=loadAssignWeeks;
   $("closePeriodButton").onclick=closePeriodGlobally;
   $("saveExpectedWeeks").onclick=saveExpectedWeeks;
   $("saveBonusSettings").onclick=saveBonusSettings;
+$("cleanBonusHistory").onclick=cleanOldBonusHistory;
   $("calculateBonus").onclick=calculateBonus;
 $("calculateHalfYearBonus").onclick=calculateHalfYearBonus;
 $("halfYear").value=new Date().getFullYear();
