@@ -131,6 +131,25 @@
   <p class="muted">
     Ürün bazlı hedef gerçekleşmeleri, prim baremleri ve hesaplanan prim tutarları burada gösterilir.
   </p>
+    <div class="row">
+  <div>
+    <label for="bonusYear">Prim yılı</label>
+    <input id="bonusYear" type="number" min="2020" max="2100">
+  </div>
+  <div>
+    <label for="bonusPeriod">Prim dönemi</label>
+    <select id="bonusPeriod">
+      <option value="1">Ocak–Şubat</option>
+      <option value="2">Mart–Nisan</option>
+      <option value="3">Mayıs–Haziran</option>
+      <option value="4">Temmuz–Ağustos</option>
+      <option value="5">Eylül–Ekim</option>
+      <option value="6">Kasım–Aralık</option>
+    </select>
+  </div>
+</div>
+
+<button id="calculateBonus">Primleri Hesapla</button>
   <div id="bonusResults">
     Prim hesaplaması henüz yapılmadı.
   </div>
