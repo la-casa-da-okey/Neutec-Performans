@@ -126,7 +126,7 @@ async function saveWeek(){
  if(!ok())return;
  const y=+$("year").value,w=+$("week").value,v=["telvis","ezeros","sugvida"].map(x=>+$(x).value);
  if(!Number.isInteger(y)||y<2020||y>2100||!Number.isInteger(w)||w<1||w>53||v.some(n=>!Number.isInteger(n)||n<0)){say("saveStatus","Yıl, hafta ve satış sayılarını kontrol et.");return;}
- try{const id=y+"-H"+String(w).padStart(2,"0");await setDoc(doc(db,"users",auth.currentUser.uid,"weeks",id),{year:y,week:w,telvis:v[0],ezeros:v[1],sugvida:v[2],updatedAt:serverTimestamp()},{merge:true});say("saveStatus","Haftalık satış kaydedildi.");await performance();}
+ try{const id=y+"-H"+String(w).padStart(2,"0");await setDoc(doc(db,"users",auth.currentUser.uid,"weeks",id),{year:y,week:w,telvis:v[0],ezeros:v[1],sugvida:v[2],updatedAt:serverTimestamp()},{merge:true});say("saveStatus","Haftalık satış kaydedildi.");await performance();await performance();}
  catch(e){say("saveStatus","Kaydedilemedi: "+e.message);}
 }
 async function performance(){
