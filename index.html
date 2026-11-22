@@ -48,6 +48,31 @@
     </div>
   </div>
 
+<div class="card">
+  <h3>Dönem İçin Beklenen Haftalar</h3>
+  <p class="muted">
+    IMS kontrolüne göre bu döneme ait haftaları gir.
+    Varsayılan olarak 8 hafta belirlenir.
+  </p>
+
+  <div class="grid3">
+    <input type="number" id="expectedWeek1" min="1" max="53" placeholder="1. hafta">
+    <input type="number" id="expectedWeek2" min="1" max="53" placeholder="2. hafta">
+    <input type="number" id="expectedWeek3" min="1" max="53" placeholder="3. hafta">
+    <input type="number" id="expectedWeek4" min="1" max="53" placeholder="4. hafta">
+    <input type="number" id="expectedWeek5" min="1" max="53" placeholder="5. hafta">
+    <input type="number" id="expectedWeek6" min="1" max="53" placeholder="6. hafta">
+    <input type="number" id="expectedWeek7" min="1" max="53" placeholder="7. hafta">
+    <input type="number" id="expectedWeek8" min="1" max="53" placeholder="8. hafta">
+  </div>
+
+  <button id="saveExpectedWeeks" class="secondary">
+    Hafta Listesini Kaydet
+  </button>
+
+  <div id="expectedWeeksStatus" class="status"></div>
+</div>
+
   <button id="closePeriodButton" class="danger">
     Dönemi Tüm Çalışanlar İçin Kapat
   </button>
