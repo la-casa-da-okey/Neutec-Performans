@@ -637,7 +637,7 @@ async function calculateHalfYearBonus(){
    let total=0,rows="";
    products.forEach(x=>{
     const gross=gate?bonusTier(pct[x.key],settings)*x.rate:0;
-    const net=gross-d.paid[x.key];total+=net;
+    const net=Math.max(0,gross-d.paid[x.key]);total+=net;
     rows+=`<tr><td>${x.name}</td><td>${d.actual[x.key].toLocaleString("tr-TR")} / ${d.target[x.key].toLocaleString("tr-TR")}</td><td>%${pct[x.key].toFixed(1).replace(".",",")}</td><td>${Math.round(gross).toLocaleString("tr-TR")} TL</td><td>${Math.round(d.paid[x.key]).toLocaleString("tr-TR")} TL</td><td>${Math.round(net).toLocaleString("tr-TR")} TL</td></tr>`;
    });
    html+=`<div class="person"><b>${esc(p.name||p.username||"Çalışan")}</b><div class="muted">Altı aylık satış/hedef toplamı, devir zinciri dahil. Brüt primden aynı yarıyılda ödenmiş iki aylık primler düşülmüştür.</div><div class="tablewrap"><table><tr><th>Ürün</th><th>Satış / Hedef</th><th>Gerçekleşme</th><th>Brüt prim</th><th>Ödenen 2 aylık</th><th>Net S1/S2</th></tr>${rows}</table></div><p><b>Net altı aylık prim: ${Math.round(Math.max(0,total)).toLocaleString("tr-TR")} TL</b></p>${gate?"":"<p class='muted'>En az bir ürün %75 altında; global prim koşulu sağlanmadı.</p>"}</div>`;
