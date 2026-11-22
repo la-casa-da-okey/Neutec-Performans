@@ -525,6 +525,19 @@ async function calculateBonus(){
    const uid=employee.id;
    const p=employee.data();
 
+   const periodStart=(year)+"-"+String((period-1)*2+1).padStart(2,"0")+"-01";
+   const periodEnd=new Date(Date.UTC(year,period*2,0)).toISOString().slice(0,10);
+   const hireDate=p.employmentStartDate||(p.createdAt?.toDate?p.createdAt.toDate().toISOString().slice(0,10):"");
+   const leaveDate=p.employmentEndDate||"";
+   if(!hireDate){
+    html+=`<div class="person"><b>${esc(p.name||p.username||"Çalışan")}</b><p class="muted">İşe giriş tarihi kayıtlı değil. Dönem prim uygunluğu doğrulanamadı.</p></div>`;
+    continue;
+   }
+   if(hireDate>periodStart||(leaveDate&&leaveDate<periodEnd)){
+    html+=`<div class="person"><b>${esc(p.name||p.username||"Çalışan")}</b><p class="muted">Bu çalışan dönem boyunca tam görevde olmadığı için iki aylık prim hesabına dahil edilmedi.</p></div>`;
+    continue;
+   }
+
    const [ws,ts]=await Promise.all([
     getDocs(collection(db,"users",uid,"weeks")),
     getDoc(doc(db,"users",uid,"targets",periodId))
