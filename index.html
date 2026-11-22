@@ -23,7 +23,7 @@
 import{initializeApp}from"https://www.gstatic.com/firebasejs/13.4.0/firebase-app.js";
 import{getAuth,createUserWithEmailAndPassword,signInWithEmailAndPassword,sendPasswordResetEmail,signOut,onAuthStateChanged}from"https://www.gstatic.com/firebasejs/13.4.0/firebase-auth.js";
 import{getFirestore,collection,doc,setDoc,getDocs,getDoc,serverTimestamp,query,where}from"https://www.gstatic.com/firebasejs/13.4.0/firebase-firestore.js";
-const cfg={apiKey:"AIzaSyCy1Ir07AFwkyg0vQB5zJ-bi2TVgmMT_UA",authDomain:"neutec-performans-c483c.firebaseapp.com",projectId:"neutec-performans-c483c",storageBucket:"neutec-performans-c483c.firebasestorage.app",messagingSenderId:"476444856742",appId:"1:476444856742:web:c0d4d1937f29e56a1eff67"};
+const cfg={apiKey:"AIzaSyBa476SDb3Jg_Vr_hjH_1OJ-GR1zczNRCQ",authDomain:"neutec-performans-c483c.firebaseapp.com",projectId:"neutec-performans-c483c",storageBucket:"neutec-performans-c483c.firebasestorage.app",messagingSenderId:"476444856742",appId:"1:476444856742:web:c0d4d1937f29e56a1eff67"};
 const app=initializeApp(cfg),auth=getAuth(app),db=getFirestore(app),ADMIN="sxBOyqTTe3SxZK3EO85Cfb0DYfJ3", $=id=>document.getElementById(id);
 const names=["Ocak–Şubat","Mart–Nisan","Mayıs–Haziran","Temmuz–Ağustos","Eylül–Ekim","Kasım–Aralık"];let profile=null,registering=false;
 const admin=()=>auth.currentUser?.uid===ADMIN,ok=()=>admin()||profile?.status==="approved"||profile?.active===true,say=(id,t)=>$(id).textContent=t;
