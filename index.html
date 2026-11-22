@@ -123,11 +123,34 @@ async function authChanged(u){
   $("weekSection").classList.remove("hidden");
   say("mainStatus","Veriler yükleniyor...");
   if(admin())await pending();
+   if(admin())await loadAssignEmployees();
   await loadTarget();
   await performance();
    await myPerformance();
  }catch(e){say("mainStatus","Profil/veri okunamadı ("+(e.code||"unknown")+"): "+e.message);}
 }
+  
+async function loadAssignEmployees(){
+ if(!admin())return;
+ try{
+  const s=await getDocs(collection(db,"users"));
+  const el=$("assignEmployee");
+  el.innerHTML='<option value="">Çalışan seç</option>';
+
+  s.forEach(d=>{
+   const p=d.data();
+   if(p.status==="approved"||p.active===true){
+    const o=document.createElement("option");
+    o.value=d.id;
+    o.textContent=p.name||p.username||d.id;
+    el.appendChild(o);
+   }
+  });
+ }catch(e){
+  say("assignStatus","Çalışanlar yüklenemedi: "+e.message);
+ }
+}
+
 async function pending(){
  try{
   const s=await getDocs(query(collection(db,"users"),where("status","==","pending")));
