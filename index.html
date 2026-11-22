@@ -145,7 +145,8 @@ async function performance(){
   $("performance").innerHTML=out||"Onaylı çalışan bulunamadı.";$("totalTelvis").textContent=grand.telvis;$("totalEzeros").textContent=grand.ezeros;$("totalSugvida").textContent=grand.sugvida;say("mainStatus","Performans verileri yüklendi.");
  }catch(e){say("mainStatus","Performans okunamadı ("+(e.code||"unknown")+"): "+e.message);}
 }
-  async function myPerformance(){
+  
+async function myPerformance(){
  if(!ok()||!auth.currentUser)return;
  try{
   const uid=auth.currentUser.uid;
@@ -153,27 +154,57 @@ async function performance(){
    getDocs(collection(db,"users",uid,"weeks")),
    getDocs(collection(db,"users",uid,"targets"))
   ]);
+
   const total={telvis:0,ezeros:0,sugvida:0};
   const rows=[];
+
   ws.forEach(x=>{
    const d=x.data();
-   for(const k of Object.keys(total))total[k]+=Number(d[k]||0);
+   for(const k of Object.keys(total)){
+    total[k]+=Number(d[k]||0);
+   }
    rows.push(d);
   });
+
   rows.sort((a,b)=>b.year-a.year||b.week-a.week);
+
   const targets=[];
   ts.forEach(x=>{
    const d=x.data();
-   targets.push(`DIL0`);
+   targets.push(`<tr>
+    <td>${d.year} ${esc(d.periodName||"")}</td>
+    <td>${d.telvis||0}</td>
+    <td>${d.ezeros||0}</td>
+    <td>${d.sugvida||0}</td>
+   </tr>`);
   });
+
   $("myPerformance").innerHTML=`
-   DIL1
-   DIL2
-   DIL3
-   DIL4
-   DIL5`;
- }catch(e)DIL6
+   <div class="grid3">
+    <div class="metric">Telvis<strong>${total.telvis}</strong></div>
+    <div class="metric">Ezeros<strong>${total.ezeros}</strong></div>
+    <div class="metric">Sugvida<strong>${total.sugvida}</strong></div>
+   </div>
+   <h3>Hedeflerim</h3>
+   <div class="tablewrap"><table>
+    <tr><th>Dönem</th><th>Telvis</th><th>Ezeros</th><th>Sugvida</th></tr>
+    ${targets.join("")||"<tr><td colspan=4>Henüz hedef yok</td></tr>"}
+   </table></div>
+   <h3>Haftalık satış geçmişim</h3>
+   <div class="tablewrap"><table>
+    <tr><th>Yıl/Hafta</th><th>Telvis</th><th>Ezeros</th><th>Sugvida</th></tr>
+    ${rows.map(d=>`<tr>
+     <td>${d.year}/${d.week}</td>
+     <td>${d.telvis||0}</td>
+     <td>${d.ezeros||0}</td>
+     <td>${d.sugvida||0}</td>
+    </tr>`).join("")||"<tr><td colspan=4>Henüz satış kaydı yok</td></tr>"}
+   </table></div>`;
+ }catch(e){
+  $("myPerformance").textContent="Kişisel performans yüklenemedi: "+e.message;
+ }
 }
+
 $("registerButton").onclick=register;$("loginButton").onclick=login;$("resetButton").onclick=reset;$("logoutButton").onclick=logout;$("saveTarget").onclick=saveTarget;$("saveWeek").onclick=saveWeek;$("targetYear").onchange=loadTarget;$("period").onchange=loadTarget;
 $("year").value=new Date().getFullYear();$("targetYear").value=new Date().getFullYear();$("week").value=1;
 onAuthStateChanged(auth,authChanged);
