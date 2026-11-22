@@ -427,10 +427,6 @@ async function performance(){
   say("mainStatus","Performans okunamadı ("+(e.code||"unknown")+"): "+e.message);
  }
 }
-
-  $("performance").innerHTML=out||"Onaylı çalışan bulunamadı.";$("totalTelvis").textContent=grand.telvis;$("totalEzeros").textContent=grand.ezeros;$("totalSugvida").textContent=grand.sugvida;say("mainStatus","Performans verileri yüklendi.");
- }catch(e){say("mainStatus","Performans okunamadı ("+(e.code||"unknown")+"): "+e.message);}
-}
   
 async function myPerformance(){
  if(!ok()||!auth.currentUser)return;
