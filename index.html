@@ -428,60 +428,150 @@ async function performance(){
  }
 }
   
+
 async function myPerformance(){
  if(!ok()||!auth.currentUser)return;
+
  try{
   const uid=auth.currentUser.uid;
+
   const [ws,ts]=await Promise.all([
    getDocs(collection(db,"users",uid,"weeks")),
    getDocs(collection(db,"users",uid,"targets"))
   ]);
 
+  const products=["telvis","ezeros","sugvida"];
   const total={telvis:0,ezeros:0,sugvida:0};
-  const rows=[];
+  const weeks=[];
+  const targets={};
+  const years=new Set();
+
+  const fmt=n=>Number(n||0).toLocaleString("tr-TR");
+  const pct=(actual,target)=>target>0
+   ? "%"+(actual/target*100).toFixed(1).replace(".",",")
+   : "—";
 
   ws.forEach(x=>{
    const d=x.data();
-   for(const k of Object.keys(total)){
+   const year=Number(d.year);
+
+   if(!Number.isInteger(year))return;
+
+   years.add(year);
+   weeks.push(d);
+
+   products.forEach(k=>{
     total[k]+=Number(d[k]||0);
-   }
-   rows.push(d);
+   });
   });
 
-  rows.sort((a,b)=>b.year-a.year||b.week-a.week);
-
-  const targets=[];
   ts.forEach(x=>{
    const d=x.data();
-   targets.push(`<tr>
-    <td>${d.year} ${esc(d.periodName||"")}</td>
-    <td>${d.telvis||0}</td>
-    <td>${d.ezeros||0}</td>
-    <td>${d.sugvida||0}</td>
-   </tr>`);
+   const year=Number(d.year);
+   const period=Number(d.period);
+
+   if(!Number.isInteger(year)||period<1||period>6)return;
+
+   years.add(year);
+   targets[year+"-"+period]=d;
   });
+
+  const periodRows=[];
+
+  [...years].sort((a,b)=>b-a).forEach(year=>{
+   for(let period=1;period<=6;period++){
+
+    const assigned=weeks.filter(w=>
+     Number(w.year)===year&&Number(w.period)===period
+    );
+
+    const actual={telvis:0,ezeros:0,sugvida:0};
+
+    assigned.forEach(w=>{
+     products.forEach(k=>{
+      actual[k]+=Number(w[k]||0);
+     });
+    });
+
+    const target=targets[year+"-"+period]||{
+     telvis:0,ezeros:0,sugvida:0
+    };
+
+    const hasData=assigned.length>0||targets[year+"-"+period];
+
+    if(!hasData)continue;
+
+    periodRows.push(`
+     <tr>
+      <td>${year}<br>${names[period-1]}</td>
+      <td>${assigned.length}</td>
+      <td>${fmt(actual.telvis)} / ${fmt(target.telvis)}
+       <br><b>${pct(actual.telvis,Number(target.telvis||0))}</b>
+      </td>
+      <td>${fmt(actual.ezeros)} / ${fmt(target.ezeros)}
+       <br><b>${pct(actual.ezeros,Number(target.ezeros||0))}</b>
+      </td>
+      <td>${fmt(actual.sugvida)} / ${fmt(target.sugvida)}
+       <br><b>${pct(actual.sugvida,Number(target.sugvida||0))}</b>
+      </td>
+     </tr>
+    `);
+   }
+  });
+
+  weeks.sort((a,b)=>
+   Number(b.year)-Number(a.year)||Number(b.week)-Number(a.week)
+  );
 
   $("myPerformance").innerHTML=`
    <div class="grid3">
-    <div class="metric">Telvis<strong>${total.telvis}</strong></div>
-    <div class="metric">Ezeros<strong>${total.ezeros}</strong></div>
-    <div class="metric">Sugvida<strong>${total.sugvida}</strong></div>
+    <div class="metric">Telvis<strong>${fmt(total.telvis)}</strong></div>
+    <div class="metric">Ezeros<strong>${fmt(total.ezeros)}</strong></div>
+    <div class="metric">Sugvida<strong>${fmt(total.sugvida)}</strong></div>
    </div>
-   <h3>Hedeflerim</h3>
-   <div class="tablewrap"><table>
-    <tr><th>Dönem</th><th>Telvis</th><th>Ezeros</th><th>Sugvida</th></tr>
-    ${targets.join("")||"<tr><td colspan=4>Henüz hedef yok</td></tr>"}
-   </table></div>
+
+   <h3>İki aylık dönem performansım</h3>
+   <div class="muted">
+    Gerçekleşen satış / hedef ve hedef gerçekleşme yüzdesi.
+    Döneme atanmamış haftalar bu tabloya dahil edilmez.
+   </div>
+
+   <div class="tablewrap">
+    <table>
+     <tr>
+      <th>Dönem</th>
+      <th>Hafta</th>
+      <th>Telvis<br>Gerçekleşen / Hedef</th>
+      <th>Ezeros<br>Gerçekleşen / Hedef</th>
+      <th>Sugvida<br>Gerçekleşen / Hedef</th>
+     </tr>
+     ${periodRows.join("")||"<tr><td colspan='5'>Henüz dönem verisi yok</td></tr>"}
+    </table>
+   </div>
+
    <h3>Haftalık satış geçmişim</h3>
-   <div class="tablewrap"><table>
-    <tr><th>Yıl/Hafta</th><th>Telvis</th><th>Ezeros</th><th>Sugvida</th></tr>
-    ${rows.map(d=>`<tr>
-     <td>${d.year}/${d.week}</td>
-     <td>${d.telvis||0}</td>
-     <td>${d.ezeros||0}</td>
-     <td>${d.sugvida||0}</td>
-    </tr>`).join("")||"<tr><td colspan=4>Henüz satış kaydı yok</td></tr>"}
-   </table></div>`;
+   <div class="tablewrap">
+    <table>
+     <tr>
+      <th>Yıl/Hafta</th>
+      <th>Dönem</th>
+      <th>Telvis</th>
+      <th>Ezeros</th>
+      <th>Sugvida</th>
+     </tr>
+     ${weeks.map(d=>`
+      <tr>
+       <td>${d.year}/${d.week}</td>
+       <td>${d.period?esc(names[Number(d.period)-1]||""):"Atanmadı"}</td>
+       <td>${fmt(d.telvis)}</td>
+       <td>${fmt(d.ezeros)}</td>
+       <td>${fmt(d.sugvida)}</td>
+      </tr>
+     `).join("")||"<tr><td colspan='5'>Henüz satış kaydı yok</td></tr>"}
+    </table>
+   </div>
+  `;
+
  }catch(e){
   $("myPerformance").textContent="Kişisel performans yüklenemedi: "+e.message;
  }
