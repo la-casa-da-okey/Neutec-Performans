@@ -388,14 +388,23 @@ async function calculateBonus(){
   }
 
   const settings=settingSnap.data();
-   const settingKeys=["bonus90","bonus95","bonus100","bonus110","bonus120"];
+  const settingKeys=["bonus90","bonus95","bonus100","bonus110","bonus120"];
+  const tariff=settingKeys.map(k=>Number(settings[k]));
+  if(tariff.some((v,i)=>!Number.isFinite(v)||v<0||(i>0&&v<tariff[i-1]))){
+   say("bonusResults","Prim tarifesi eksik, geçersiz veya artan sırada değil.");
+   return;
+  }
 
-if(settingKeys.some(k=>
- !Number.isFinite(Number(settings[k]))||Number(settings[k])<0
-)){
- say("bonusResults","Prim tarifesinde eksik veya geçersiz tutar var.");
- return;
-}
+  const periodSettingsSnap=await getDoc(doc(db,"periodSettings",periodId));
+  if(!periodSettingsSnap.exists()||!Array.isArray(periodSettingsSnap.data().expectedWeeks)||periodSettingsSnap.data().expectedWeeks.length===0){
+   say("bonusResults","Bu dönem için beklenen hafta listesi kaydedilmemiş. Önce yönetici hafta listesini kaydetmeli.");
+   return;
+  }
+  const expectedWeeks=periodSettingsSnap.data().expectedWeeks.map(Number);
+  if(expectedWeeks.some(w=>!Number.isInteger(w)||w<1||w>53)||new Set(expectedWeeks).size!==expectedWeeks.length){
+   say("bonusResults","Dönemin beklenen hafta listesi geçersiz. Yönetici listeyi düzeltmeli.");
+   return;
+  }
   const products=[
    {key:"telvis",name:"Telvis",rate:0.40},
    {key:"ezeros",name:"Ezeros",rate:0.35},
@@ -430,13 +439,38 @@ if(settingKeys.some(k=>
    }
 
    const target=ts.data();
-   const actual={telvis:0,ezeros:0,sugvida:0};
+   const invalidTargets=products.some(x=>{
+    const v=target[x.key];
+    return v===null||v===undefined||v===""||!Number.isFinite(Number(v))||Number(v)<=0;
+   });
+   if(invalidTargets){
+    html+=`<div class="person"><b>${esc(p.name||p.username||"Çalışan")}</b><p class="muted">Bir veya daha fazla ürün hedefi eksik, geçersiz veya sıfır. Prim hesaplanamadı.</p></div>`;
+    continue;
+   }
 
-   ws.forEach(w=>{
+   const periodWeeks=ws.docs.filter(w=>{
     const d=w.data();
-    if(Number(d.year)===year&&Number(d.period)===period){
-     products.forEach(x=>actual[x.key]+=Number(d[x.key]||0));
-    }
+    return Number(d.year)===year&&Number(d.period)===period;
+   });
+   const byWeek=new Map(periodWeeks.map(w=>[Number(w.data().week),w.data()]));
+   const missingWeeks=expectedWeeks.filter(w=>!byWeek.has(w));
+   const invalidWeeks=expectedWeeks.filter(w=>{
+    const d=byWeek.get(w);
+    return !d||products.some(x=>{
+     const v=d[x.key];
+     return v===null||v===undefined||v===""||!Number.isFinite(Number(v))||Number(v)<0;
+    });
+   });
+   if(missingWeeks.length||invalidWeeks.length){
+    const issues=[...new Set([...missingWeeks,...invalidWeeks])].sort((a,b)=>a-b);
+    html+=`<div class="person"><b>${esc(p.name||p.username||"Çalışan")}</b><p class="muted">Beklenen haftaların tamamında geçerli satış kaydı yok. Eksik/hatalı haftalar: ${issues.join(", ")}. Prim hesaplanamadı.</p></div>`;
+    continue;
+   }
+
+   const actual={telvis:0,ezeros:0,sugvida:0};
+   expectedWeeks.forEach(week=>{
+    const d=byWeek.get(week);
+    products.forEach(x=>actual[x.key]+=Number(d[x.key]));
    });
 
    const percentages={};
@@ -484,18 +518,18 @@ if(settingKeys.some(k=>
   async function saveBonusSettings(){
  if(!admin())return;
 
- const values={
-  bonus90:Number($("bonus90").value),
-  bonus95:Number($("bonus95").value),
-  bonus100:Number($("bonus100").value),
-  bonus110:Number($("bonus110").value),
-  bonus120:Number($("bonus120").value)
- };
-
- if(Object.values(values).some(v=>!Number.isFinite(v)||v<0)){
-  say("bonusSettingsStatus","Prim tutarlarını kontrol et.");
+ const keys=["bonus90","bonus95","bonus100","bonus110","bonus120"];
+ const raw=keys.map(k=>$(k).value.trim());
+ if(raw.some(v=>v==="")){
+  say("bonusSettingsStatus","Beş prim bareminin tamamını doldur.");
   return;
  }
+ const nums=raw.map(Number);
+ if(nums.some((v,i)=>!Number.isFinite(v)||v<0||(i>0&&v<nums[i-1]))){
+  say("bonusSettingsStatus","Prim tutarları geçerli olmalı ve baremler yükseldikçe azalmamalı.");
+  return;
+ }
+ const values=Object.fromEntries(keys.map((k,i)=>[k,nums[i]]));
 
  try{
   await setDoc(doc(db,"bonusSettings","current"),{
