@@ -798,6 +798,9 @@ $("registerButton").onclick=register;$("loginButton").onclick=login;$("resetButt
 $("assignYear").onchange=loadAssignWeeks;
   $("assignPeriodButton").onclick=assignWeekToPeriod;
   $("closePeriodButton").onclick=closePeriodGlobally;
+  $("saveExpectedWeeks").onclick=saveExpectedWeeks;
+$("closeYear").onchange=loadExpectedWeeks;
+$("closePeriod").onchange=loadExpectedWeeks;
 $("year").value=new Date().getFullYear();$("targetYear").value=new Date().getFullYear();$("week").value=1;$("closeYear").value=new Date().getFullYear();
 onAuthStateChanged(auth,authChanged);
 </script>
