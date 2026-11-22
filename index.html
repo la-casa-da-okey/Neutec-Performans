@@ -144,6 +144,35 @@ async function performance(){
   $("performance").innerHTML=out||"Onaylı çalışan bulunamadı.";$("totalTelvis").textContent=grand.telvis;$("totalEzeros").textContent=grand.ezeros;$("totalSugvida").textContent=grand.sugvida;say("mainStatus","Performans verileri yüklendi.");
  }catch(e){say("mainStatus","Performans okunamadı ("+(e.code||"unknown")+"): "+e.message);}
 }
+  async function myPerformance(){
+ if(!ok()||!auth.currentUser)return;
+ try{
+  const uid=auth.currentUser.uid;
+  const [ws,ts]=await Promise.all([
+   getDocs(collection(db,"users",uid,"weeks")),
+   getDocs(collection(db,"users",uid,"targets"))
+  ]);
+  const total={telvis:0,ezeros:0,sugvida:0};
+  const rows=[];
+  ws.forEach(x=>{
+   const d=x.data();
+   for(const k of Object.keys(total))total[k]+=Number(d[k]||0);
+   rows.push(d);
+  });
+  rows.sort((a,b)=>b.year-a.year||b.week-a.week);
+  const targets=[];
+  ts.forEach(x=>{
+   const d=x.data();
+   targets.push(`DIL0`);
+  });
+  $("myPerformance").innerHTML=`
+   DIL1
+   DIL2
+   DIL3
+   DIL4
+   DIL5`;
+ }catch(e)DIL6
+}
 $("registerButton").onclick=register;$("loginButton").onclick=login;$("resetButton").onclick=reset;$("logoutButton").onclick=logout;$("saveTarget").onclick=saveTarget;$("saveWeek").onclick=saveWeek;$("targetYear").onchange=loadTarget;$("period").onchange=loadTarget;
 $("year").value=new Date().getFullYear();$("targetYear").value=new Date().getFullYear();$("week").value=1;
 onAuthStateChanged(auth,authChanged);
