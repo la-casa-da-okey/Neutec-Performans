@@ -18,7 +18,12 @@
 </header>
 
 <main>
-<section class="card hidden" id="overviewSection"><h2>Genel Performans</h2><div class="grid3"><div class="metric">Telvis<strong id="totalTelvis">0</strong>Toplam satış</div><div class="metric">Ezeros<strong id="totalEzeros">0</strong>Toplam satış</div><div class="metric">Sugvida<strong id="totalSugvida">0</strong>Toplam satış</div></div><div id="mainStatus" class="status">Giriş bekleniyor.</div></section>
+<section class="card hidden" id="myPerformanceSection">
+  <h2 id="personalPerformanceTitle">Kişisel Performansım</h2>
+  <div id="mainStatus" class="status">Veriler yükleniyor...</div>
+  <div id="myPerformance">Kişisel performans verileri yükleniyor.</div>
+</section>
+
 <section class="card hidden" id="adminPanel"><h2>Yönetici · Kullanıcı Onayları</h2><div id="pendingUsers">Yükleniyor...</div><div id="adminStatus" class="status"></div></section>
 
 <section class="card hidden" id="employeeLifecycleSection">
@@ -181,12 +186,7 @@
 </div>
 </section>
 <section class="card hidden" id="performanceSection"><h2>Çalışan Performansları</h2><div id="performance">Giriş yapıldığında yüklenecek.</div></section>
-<section class="card hidden" id="myPerformanceSection">
-  <h2>Kişisel Performansım</h2>
-  <div id="myPerformance">
-    Kişisel performans verileri yükleniyor.
-  </div>
-</section>
+
   <section class="card hidden" id="weekSection"><h2>Haftalık Satış Girişi</h2><div class="row"><div><label for="year">Yıl</label><input id="year" type="number"></div><div><label for="week">Hafta</label><input id="week" type="number" min="1" max="53"></div></div><label for="telvis">Telvis</label><input id="telvis" type="number" min="0" value="0"><label for="ezeros">Ezeros</label><input id="ezeros" type="number" min="0" value="0"><label for="sugvida">Sugvida</label><input id="sugvida" type="number" min="0" value="0"><button id="saveWeek">Haftalık Verileri Kaydet</button><div id="saveStatus" class="status"></div></section>
 <section class="card"><h2>Hesap / Giriş</h2><div id="loggedArea" class="hidden"><div id="welcome"></div><button id="logoutButton" class="secondary">Çıkış Yap</button></div><div id="loginArea"><h3>Giriş Yap</h3><label for="email">E-posta</label><input id="email" type="email" autocomplete="username"><label for="password">Şifre</label><input id="password" type="password" autocomplete="current-password"><div class="row"><button id="loginButton">Giriş Yap</button><button id="resetButton" class="secondary">Şifremi Unuttum</button></div><hr style="border:0;border-top:1px solid #2a3a50;margin:16px 0"><h3>Yeni Çalışan Kaydı</h3><p class="muted">Gerçek e-posta adresinle kayıt ol. Halit Bey onaylamadan uygulama verilerine erişemezsin.</p><label for="newName">Ad Soyad</label><input id="newName" autocomplete="name"><label for="newUsername">Kullanıcı adı</label><input id="newUsername" autocomplete="username"><label for="newEmail">Gerçek e-posta</label><input id="newEmail" type="email" autocomplete="email"><label for="newPassword">Şifre (en az 6 karakter)</label><input id="newPassword" type="password" autocomplete="new-password"><button id="registerButton">Kayıt Oluştur</button></div><div id="authStatus" class="status"></div></section>
 </main>
@@ -242,7 +242,6 @@ async function authChanged(u){
  $("employeeLifecycleSection").classList.toggle("hidden",!admin());
   $("periodAssignmentSection").classList.toggle("hidden",!admin());
   $("periodCloseSection").classList.toggle("hidden",!admin());
- $("overviewSection").classList.add("hidden");
  $("targetSection").classList.add("hidden");
  $("performanceSection").classList.add("hidden");
   $("myPerformanceSection").classList.add("hidden");
@@ -253,13 +252,13 @@ async function authChanged(u){
   if(!admin()&&!profile){await signOut(auth);say("authStatus","Kullanıcı profili bulunamadı.");return;}
   $("welcome").textContent=(profile?.name||profile?.username||u.email)+(admin()?" · Yönetici":"");
   if(!ok()){const ended=profile?.employmentEndDate&&localDate()>profile.employmentEndDate;say("mainStatus",ended?"İşten ayrılış tarihin geçtiği için uygulama ve prim işlemlerine erişimin kapatıldı.":"Hesabın yönetici onayı bekliyor. Onaylandıktan sonra yeniden giriş yap.");$("performance").textContent=ended?"İşten ayrılış nedeniyle erişim kapalı.":"Hesap onay bekliyor.";return;}
-  $("overviewSection").classList.remove("hidden");
    $("bonusSection").classList.remove("hidden");
    $("bonusSettings").classList.toggle("hidden",!admin());
    if(admin())await loadBonusSettings();
   $("targetSection").classList.remove("hidden");
   $("performanceSection").classList.remove("hidden");
    $("myPerformanceSection").classList.remove("hidden");
+  $("personalPerformanceTitle").textContent=admin()?"Yönetici Kişisel Performans Raporu":"Kişisel Performansım";
   $("weekSection").classList.remove("hidden");
   say("mainStatus","Veriler yükleniyor...");
   if(admin())await pending();
@@ -909,7 +908,6 @@ async function performance(){
 
  try{
   const us=await getDocs(collection(db,"users"));
-  const grand={telvis:0,ezeros:0,sugvida:0};
   let out="";
 
   const products=["telvis","ezeros","sugvida"];
@@ -959,7 +957,6 @@ async function performance(){
     targets[year+"-"+period]=d;
    });
 
-   products.forEach(k=>grand[k]+=total[k]);
 
    const periodRows=[];
 
@@ -1063,10 +1060,6 @@ async function performance(){
 
   $("performance").innerHTML=out||"Onaylı çalışan bulunamadı.";
 
-  $("totalTelvis").textContent=fmt(grand.telvis);
-  $("totalEzeros").textContent=fmt(grand.ezeros);
-  $("totalSugvida").textContent=fmt(grand.sugvida);
-
   say("mainStatus","Performans verileri yüklendi.");
 
  }catch(e){
@@ -1123,8 +1116,9 @@ async function myPerformance(){
   });
 
   const periodRows=[];
+  const chartPeriods=[];
 
-  [...years].sort((a,b)=>b-a).forEach(year=>{
+  [...years].sort((a,b)=>a-b).forEach(year=>{
    for(let period=1;period<=6;period++){
 
     const assigned=weeks.filter(w=>
@@ -1146,6 +1140,16 @@ async function myPerformance(){
     const hasData=assigned.length>0||targets[year+"-"+period];
 
     if(!hasData)continue;
+
+    chartPeriods.push({
+     label:year+" "+names[period-1],
+     actual:{...actual},
+     target:{
+      telvis:Number(target.telvis||0),
+      ezeros:Number(target.ezeros||0),
+      sugvida:Number(target.sugvida||0)
+     }
+    });
 
     periodRows.push(`
      <tr>
@@ -1169,12 +1173,48 @@ async function myPerformance(){
    Number(b.year)-Number(a.year)||Number(b.week)-Number(a.week)
   );
 
+  const chartData=chartPeriods.slice(-6);
+  const chartSvg=(key,label)=>{
+   const maxValue=Math.max(1,...chartData.flatMap(p=>[p.actual[key],p.target[key]]))*1.12;
+   const chartWidth=720, chartHeight=245, top=24, bottom=190;
+   const slot=chartWidth/Math.max(chartData.length,1);
+   const barWidth=Math.min(22,slot*0.22);
+   const bars=chartData.map((p,i)=>{
+    const center=slot*i+slot/2;
+    const actualHeight=p.actual[key]/maxValue*(bottom-top);
+    const targetHeight=p.target[key]/maxValue*(bottom-top);
+    const x1=center-barWidth-3, x2=center+3;
+    const y1=bottom-actualHeight, y2=bottom-targetHeight;
+    return `
+     <rect x="${x1}" y="${y1}" width="${barWidth}" height="${actualHeight}" rx="3" fill="#38bdf8"/>
+     <rect x="${x2}" y="${y2}" width="${barWidth}" height="${targetHeight}" rx="3" fill="#64748b"/>
+     <text x="${center}" y="211" text-anchor="middle" fill="#cbd5e1" font-size="10">${esc(p.label.replace(" ", "\n"))}</text>
+    `;
+   }).join("");
+   const grid=[0,0.25,0.5,0.75,1].map(v=>{
+    const y=bottom-v*(bottom-top);
+    return `<line x1="42" y1="${y}" x2="710" y2="${y}" stroke="#334155" stroke-width="1"/><text x="35" y="${y+4}" text-anchor="end" fill="#94a3b8" font-size="10">${Math.round(maxValue*v)}</text>`;
+   }).join("");
+   return `
+    <div class="person">
+     <b>${label} · Dönemsel satış / hedef</b>
+     <div class="muted">Son 6 kayıtlı dönem. Mavi: gerçekleşen satış · Gri: hedef</div>
+     <svg viewBox="0 0 720 230" role="img" aria-label="${label} dönemsel satış ve hedef grafiği" style="width:100%;height:auto;display:block">
+      ${grid}${bars}
+     </svg>
+    </div>`;
+  };
+
   $("myPerformance").innerHTML=`
    <div class="grid3">
     <div class="metric">Telvis<strong>${fmt(total.telvis)}</strong></div>
     <div class="metric">Ezeros<strong>${fmt(total.ezeros)}</strong></div>
     <div class="metric">Sugvida<strong>${fmt(total.sugvida)}</strong></div>
    </div>
+
+   <h3>Grafiklerle dönemsel performans · Son 6 dönem</h3>
+   <div class="muted">Her ürün ayrı ölçekte gösterilir; böylece ürünler arasındaki satış hacmi farkı grafiği yanıltmaz.</div>
+   ${chartData.length?chartSvg("telvis","Telvis")+chartSvg("ezeros","Ezeros")+chartSvg("sugvida","Sugvida"):"<p class='muted'>Grafik oluşturmak için dönem satış ve hedef verisi bulunamadı.</p>"}
 
    <h3>İki aylık dönem performansım</h3>
    <div class="muted">
