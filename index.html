@@ -310,7 +310,33 @@ async function assignWeekToPeriod(){
   say("assignStatus","Atama başarısız: "+e.message);
  }
 }
-  
+  async function loadBonusSettings(){
+ if(!admin())return;
+
+ try{
+  const snap=await getDoc(doc(db,"bonusSettings","current"));
+  const defaults={
+   90:18000,
+   95:30000,
+   100:48000,
+   110:54000,
+   120:60000
+  };
+
+  const data=snap.exists()?snap.data():defaults;
+
+  $("bonus90").value=data.bonus90??defaults[90];
+  $("bonus95").value=data.bonus95??defaults[95];
+  $("bonus100").value=data.bonus100??defaults[100];
+  $("bonus110").value=data.bonus110??defaults[110];
+  $("bonus120").value=data.bonus120??defaults[120];
+
+  say("bonusSettingsStatus",
+   snap.exists()?"Kayıtlı prim tarifesi yüklendi.":"Varsayılan prim tarifesi yüklendi.");
+ }catch(e){
+  say("bonusSettingsStatus","Tarife yüklenemedi: "+e.message);
+ }
+}
 async function loadExpectedWeeks(){
  if(!admin())return;
 
