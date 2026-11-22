@@ -189,7 +189,40 @@ async function loadAssignWeeks(){
   say("assignStatus","Haftalar yüklenemedi: "+e.message);
  }
 }
+async function assignWeekToPeriod(){
+ if(!admin())return;
 
+ const uid=$("assignEmployee").value;
+ const weekId=$("assignWeek").value;
+ const period=Number($("assignPeriod").value);
+
+ if(!uid||!weekId||period<1||period>6){
+  say("assignStatus","Çalışan, hafta ve dönem seçmelisin.");
+  return;
+ }
+
+ try{
+  const ref=doc(db,"users",uid,"weeks",weekId);
+  const snap=await getDoc(ref);
+
+  if(!snap.exists()){
+   say("assignStatus","Haftalık kayıt bulunamadı.");
+   return;
+  }
+
+  await setDoc(ref,{
+   period:period,
+   periodName:names[period-1],
+   assignedAt:serverTimestamp(),
+   assignedBy:auth.currentUser.uid
+  },{merge:true});
+
+  say("assignStatus","Hafta "+snap.data().week+" · "+names[period-1]+" dönemine atandı.");
+  await loadAssignWeeks();
+ }catch(e){
+  say("assignStatus","Atama başarısız: "+e.message);
+ }
+}
 
 async function pending(){
  try{
