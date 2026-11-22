@@ -112,6 +112,21 @@
 
 <section class="card hidden" id="targetSection"><h2>İki Aylık Hedefler</h2><div class="row"><div><label for="targetYear">Hedef yılı</label><input id="targetYear" type="number"></div><div><label for="period">Dönem</label><select id="period"><option value="1">Ocak–Şubat</option><option value="2">Mart–Nisan</option><option value="3">Mayıs–Haziran</option><option value="4">Temmuz–Ağustos</option><option value="5">Eylül–Ekim</option><option value="6">Kasım–Aralık</option></select></div></div><label for="targetTelvis">Telvis hedefi</label><input id="targetTelvis" type="number" min="0" value="0"><label for="targetEzeros">Ezeros hedefi</label><input id="targetEzeros" type="number" min="0" value="0"><label for="targetSugvida">Sugvida hedefi</label><input id="targetSugvida" type="number" min="0" value="0"><button id="saveTarget">Hedefleri Kaydet</button><div id="targetStatus" class="status"></div></section>
   <section class="card hidden" id="bonusSection">
+    <div id="bonusSettings" class="hidden">
+  <h3>Yönetici · Prim Tarifesi</h3>
+  <p class="muted">Üç ürün için ortak prim tutarları.</p>
+
+  <div class="grid3">
+    <input id="bonus90" type="number" min="0" placeholder="%90 primi">
+    <input id="bonus95" type="number" min="0" placeholder="%95 primi">
+    <input id="bonus100" type="number" min="0" placeholder="%100 primi">
+    <input id="bonus110" type="number" min="0" placeholder="%110 primi">
+    <input id="bonus120" type="number" min="0" placeholder="%120 primi">
+  </div>
+
+  <button id="saveBonusSettings" class="secondary">Prim Tarifesini Kaydet</button>
+  <div id="bonusSettingsStatus" class="status"></div>
+</div>
   <h2>İki Aylık Prim Hesaplama</h2>
   <p class="muted">
     Ürün bazlı hedef gerçekleşmeleri, prim baremleri ve hesaplanan prim tutarları burada gösterilir.
