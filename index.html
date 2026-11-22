@@ -203,6 +203,7 @@ async function authChanged(u){
   $("overviewSection").classList.remove("hidden");
    $("bonusSection").classList.remove("hidden");
    $("bonusSettings").classList.toggle("hidden",!admin());
+   if(admin())await loadBonusSettings();
   $("targetSection").classList.remove("hidden");
   $("performanceSection").classList.remove("hidden");
    $("myPerformanceSection").classList.remove("hidden");
