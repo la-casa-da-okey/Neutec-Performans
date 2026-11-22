@@ -770,7 +770,7 @@ async function performance(){
   for(const u of us.docs){
    const p=u.data();
 
-   if(u.id===ADMIN||p.status==="pending"||p.status==="rejected"||(p.active===false&&!admin()))continue;
+   if(u.id===ADMIN||(p.status!=="approved"&&p.active!==true))continue;
 
    const [ws,ts]=await Promise.all([
     getDocs(collection(db,"users",u.id,"weeks")),
