@@ -168,6 +168,13 @@
   <div id="bonusResults">
     Prim hesaplaması henüz yapılmadı.
   </div>
+<div class="card">
+ <h3>Altı Aylık Prim · S1 / S2</h3>
+ <p class="muted">S1: Ocak–Haziran · S2: Temmuz–Aralık. İki aylık prim tarifesi kullanılır; ayrı TL baremi yoktur. Aynı yarıyılda ödenmiş iki aylık primler ürün bazında mahsup edilir.</p>
+ <div class="row"><div><label for="halfYear">Yıl</label><input id="halfYear" type="number" min="2020" max="2100"></div><div><label for="halfPeriod">Yarıyıl</label><select id="halfPeriod"><option value="1">S1 · Ocak–Haziran</option><option value="2">S2 · Temmuz–Aralık</option></select></div></div>
+ <button id="calculateHalfYearBonus">S1 / S2 Primini Hesapla</button>
+ <div id="halfYearResults" class="status">Henüz hesaplama yapılmadı.</div>
+</div>
 </section>
 <section class="card hidden" id="performanceSection"><h2>Çalışan Performansları</h2><div id="performance">Giriş yapıldığında yüklenecek.</div></section>
 <section class="card hidden" id="myPerformanceSection">
@@ -465,171 +472,172 @@ async function assignWeekToPeriod(){
 
 async function calculateBonus(){
  if(!ok())return;
-
- const year=Number($("bonusYear").value);
- const period=Number($("bonusPeriod").value);
+ const year=Number($("bonusYear").value),period=Number($("bonusPeriod").value);
  const periodId=year+"-P"+period;
-
- if(!Number.isInteger(year)||year<2020||year>2100||period<1||period>6){
-  say("bonusResults","Yıl ve dönem seçimini kontrol et.");
-  return;
- }
-
+ if(!Number.isInteger(year)||year<2020||year>2100||period<1||period>6){say("bonusResults","Yıl ve dönem seçimini kontrol et.");return;}
  try{
   say("bonusResults","Primler hesaplanıyor...");
-
-  const settingSnap=await getDoc(doc(db,"bonusSettings","current"));
-  if(!settingSnap.exists()){
-   say("bonusResults","Prim tarifesi bulunamadı.");
-   return;
-  }
-
+  const [settingSnap,periodSettingsSnap]=await Promise.all([
+   getDoc(doc(db,"bonusSettings","current")),
+   getDoc(doc(db,"periodSettings",periodId))
+  ]);
+  if(!settingSnap.exists()){say("bonusResults","Prim tarifesi bulunamadı.");return;}
   const settings=settingSnap.data();
-  const settingKeys=["bonus90","bonus95","bonus100","bonus110","bonus120"];
-  const tariff=settingKeys.map(k=>Number(settings[k]));
-  if(tariff.some((v,i)=>!Number.isFinite(v)||v<0||(i>0&&v<tariff[i-1]))){
-   say("bonusResults","Prim tarifesi eksik, geçersiz veya artan sırada değil.");
-   return;
-  }
-
-  const periodSettingsSnap=await getDoc(doc(db,"periodSettings",periodId));
-  if(!periodSettingsSnap.exists()||!Array.isArray(periodSettingsSnap.data().expectedWeeks)||periodSettingsSnap.data().expectedWeeks.length===0){
-   say("bonusResults","Bu dönem için beklenen hafta listesi kaydedilmemiş. Önce yönetici hafta listesini kaydetmeli.");
-   return;
-  }
+  const tariff=["bonus90","bonus95","bonus100","bonus110","bonus120"].map(k=>Number(settings[k]));
+  if(tariff.some((v,i)=>!Number.isFinite(v)||v<0||(i>0&&v<tariff[i-1]))){say("bonusResults","Prim tarifesi geçersiz.");return;}
+  if(!periodSettingsSnap.exists()||!Array.isArray(periodSettingsSnap.data().expectedWeeks)||!periodSettingsSnap.data().expectedWeeks.length){say("bonusResults","Beklenen hafta listesi kaydedilmemiş.");return;}
   const expectedWeeks=periodSettingsSnap.data().expectedWeeks.map(Number);
-  if(expectedWeeks.some(w=>!Number.isInteger(w)||w<1||w>53)||new Set(expectedWeeks).size!==expectedWeeks.length){
-   say("bonusResults","Dönemin beklenen hafta listesi geçersiz. Yönetici listeyi düzeltmeli.");
-   return;
-  }
-  const products=[
-   {key:"telvis",name:"Telvis",rate:0.40},
-   {key:"ezeros",name:"Ezeros",rate:0.35},
-   {key:"sugvida",name:"Sugvida",rate:0.25}
-  ];
-
-  const users=admin()
-   ? await getDocs(collection(db,"users"))
-   : null;
-
-  const employeeList=admin()
-   ? users.docs.filter(u=>{
-      const p=u.data();
-      return u.id!==ADMIN&&(p.status==="approved"||p.active===true);
-     })
-   : [{id:auth.currentUser.uid,data:()=>profile||{}}];
-
+  if(expectedWeeks.some(w=>!Number.isInteger(w)||w<1||w>53)||new Set(expectedWeeks).size!==expectedWeeks.length){say("bonusResults","Beklenen hafta listesi geçersiz.");return;}
+  const products=[{key:"telvis",name:"Telvis",rate:.40},{key:"ezeros",name:"Ezeros",rate:.35},{key:"sugvida",name:"Sugvida",rate:.25}];
+  const users=admin()?await getDocs(collection(db,"users")):null;
+  const employees=admin()?users.docs.filter(u=>{const p=u.data();return u.id!==ADMIN&&(p.status==="approved"||p.active===true);}):[{id:auth.currentUser.uid,data:()=>profile||{}}];
+  const paid=(settings.paidBonusRecords||[]);
   let html="";
-
-  for(const employee of employeeList){
-   const uid=employee.id;
-   const p=employee.data();
-
-   const periodStart=(year)+"-"+String((period-1)*2+1).padStart(2,"0")+"-01";
-   const periodEnd=new Date(Date.UTC(year,period*2,0)).toISOString().slice(0,10);
-   const hireDate=p.employmentStartDate||(p.createdAt?.toDate?p.createdAt.toDate().toISOString().slice(0,10):"");
-   const leaveDate=p.employmentEndDate||"";
-   if(!hireDate){
-    html+=`<div class="person"><b>${esc(p.name||p.username||"Çalışan")}</b><p class="muted">İşe giriş tarihi kayıtlı değil. Dönem prim uygunluğu doğrulanamadı.</p></div>`;
-    continue;
-   }
-   if(hireDate>periodStart||(leaveDate&&leaveDate<periodEnd)){
-    html+=`<div class="person"><b>${esc(p.name||p.username||"Çalışan")}</b><p class="muted">Bu çalışan dönem boyunca tam görevde olmadığı için iki aylık prim hesabına dahil edilmedi.</p></div>`;
-    continue;
-   }
-
-   const [ws,ts]=await Promise.all([
-    getDocs(collection(db,"users",uid,"weeks")),
-    getDoc(doc(db,"users",uid,"targets",periodId))
-   ]);
-
-   if(!ts.exists()){
-    html+=`<div class="person"><b>${esc(p.name||p.username||"Çalışan")}</b><p class="muted">Dönem hedefi bulunamadı. Prim hesaplanamadı.</p></div>`;
-    continue;
-   }
-
+  for(const employee of employees){
+   const uid=employee.id,p=employee.data(),label=esc(p.name||p.username||"Çalışan");
+   const startDate=year+"-"+String((period-1)*2+1).padStart(2,"0")+"-01";
+   const endDate=new Date(Date.UTC(year,period*2,0)).toISOString().slice(0,10);
+   const hire=p.employmentStartDate||(p.createdAt?.toDate?p.createdAt.toDate().toISOString().slice(0,10):"");
+   const leave=p.employmentEndDate||"";
+   if(!hire||hire>startDate||(leave&&leave<endDate)){html+=`<div class="person"><b>${label}</b><p class="muted">Tam dönem çalışma koşulu sağlanmadı veya işe giriş tarihi eksik. İki aylık prim yok.</p></div>`;continue;}
+   const [ws,ts]=await Promise.all([getDocs(collection(db,"users",uid,"weeks")),getDoc(doc(db,"users",uid,"targets",periodId))]);
+   if(!ts.exists()){html+=`<div class="person"><b>${label}</b><p class="muted">Hedef bulunamadı.</p></div>`;continue;}
    const target=ts.data();
-   const invalidTargets=products.some(x=>{
-    const v=target[x.key];
-    return v===null||v===undefined||v===""||!Number.isFinite(Number(v))||Number(v)<=0;
-   });
-   if(invalidTargets){
-    html+=`<div class="person"><b>${esc(p.name||p.username||"Çalışan")}</b><p class="muted">Bir veya daha fazla ürün hedefi eksik, geçersiz veya sıfır. Prim hesaplanamadı.</p></div>`;
-    continue;
-   }
-
-   const periodWeeks=ws.docs.filter(w=>{
-    const d=w.data();
-    return Number(d.year)===year&&Number(d.period)===period;
-   });
-   const weekNumbers=periodWeeks.map(w=>Number(w.data().week));
-   const duplicateWeeks=weekNumbers.filter((w,i)=>weekNumbers.indexOf(w)!==i);
-   if(duplicateWeeks.length){
-    html+=`<div class="person"><b>${esc(p.name||p.username||"Çalışan")}</b><p class="muted">Aynı hafta numarasıyla birden fazla dönem kaydı bulundu: ${[...new Set(duplicateWeeks)].join(", ")}. Önce kayıtları düzelt.</p></div>`;
-    continue;
-   }
+   if(products.some(x=>target[x.key]===null||target[x.key]===undefined||target[x.key]===""||!Number.isFinite(Number(target[x.key]))||Number(target[x.key])<=0)){html+=`<div class="person"><b>${label}</b><p class="muted">Hedeflerden biri eksik veya geçersiz.</p></div>`;continue;}
+   const periodWeeks=ws.docs.filter(w=>Number(w.data().year)===year&&Number(w.data().period)===period);
+   const nums=periodWeeks.map(w=>Number(w.data().week));
+   if(nums.some((n,i)=>nums.indexOf(n)!==i)){html+=`<div class="person"><b>${label}</b><p class="muted">Tekrarlanan hafta numarası var.</p></div>`;continue;}
    const byWeek=new Map(periodWeeks.map(w=>[Number(w.data().week),w.data()]));
-   const missingWeeks=expectedWeeks.filter(w=>!byWeek.has(w));
-   const invalidWeeks=expectedWeeks.filter(w=>{
-    const d=byWeek.get(w);
-    return !d||products.some(x=>{
-     const v=d[x.key];
-     return v===null||v===undefined||v===""||!Number.isFinite(Number(v))||Number(v)<0;
-    });
-   });
-   if(missingWeeks.length||invalidWeeks.length){
-    const issues=[...new Set([...missingWeeks,...invalidWeeks])].sort((a,b)=>a-b);
-    html+=`<div class="person"><b>${esc(p.name||p.username||"Çalışan")}</b><p class="muted">Beklenen haftaların tamamında geçerli satış kaydı yok. Eksik/hatalı haftalar: ${issues.join(", ")}. Prim hesaplanamadı.</p></div>`;
-    continue;
-   }
-
+   const issues=expectedWeeks.filter(w=>{const d=byWeek.get(w);return !d||products.some(x=>d[x.key]===null||d[x.key]===undefined||d[x.key]===""||!Number.isFinite(Number(d[x.key]))||Number(d[x.key])<0);});
+   if(issues.length){html+=`<div class="person"><b>${label}</b><p class="muted">Eksik/hatalı haftalar: ${issues.join(", ")}.</p></div>`;continue;}
    const actual={telvis:0,ezeros:0,sugvida:0};
-   expectedWeeks.forEach(week=>{
-    const d=byWeek.get(week);
-    products.forEach(x=>actual[x.key]+=Number(d[x.key]));
-   });
-
-   const percentages={};
-   products.forEach(x=>{
-    const t=Number(target[x.key]);
-    percentages[x.key]=t>0?actual[x.key]/t*100:0;
-   });
-
-   const globalGate=products.every(x=>
-    Number(target[x.key])>0&&percentages[x.key]>=75
-   );
-
-   let totalBonus=0;
-   let rows="";
-
-   products.forEach(x=>{
-    const base=bonusTier(percentages[x.key],settings);
-    const bonus=globalGate?base*x.rate:0;
-    totalBonus+=bonus;
-
-    rows+=`<tr>
-     <td>${x.name}</td>
-     <td>%${percentages[x.key].toFixed(1).replace(".",",")}</td>
-     <td>${Math.round(bonus).toLocaleString("tr-TR")} TL</td>
-    </tr>`;
-   });
-
-   html+=`<div class="person">
-    <b>${esc(p.name||p.username||"Çalışan")}</b>
-    <div class="tablewrap"><table>
-     <tr><th>Ürün</th><th>Gerçekleşme</th><th>Prim</th></tr>
-     ${rows}
-    </table></div>
-    <p><b>Toplam ön hesaplama: ${Math.round(totalBonus).toLocaleString("tr-TR")} TL</b></p>
-    ${globalGate?"":"<p class='muted'>En az bir ürün %75 eşiğinin altında veya hedefi eksik. Global prim koşulu sağlanmadı.</p>"}
-   </div>`;
+   expectedWeeks.forEach(w=>products.forEach(x=>actual[x.key]+=Number(byWeek.get(w)[x.key])));
+   const percentages={};products.forEach(x=>percentages[x.key]=actual[x.key]/Number(target[x.key])*100);
+   const gate=products.every(x=>percentages[x.key]>=75);
+   const amounts={};let total=0,rows="";
+   products.forEach(x=>{amounts[x.key]=gate?bonusTier(percentages[x.key],settings)*x.rate:0;total+=amounts[x.key];rows+=`<tr><td>${x.name}</td><td>%${percentages[x.key].toFixed(1).replace(".",",")}</td><td>${Math.round(amounts[x.key]).toLocaleString("tr-TR")} TL</td></tr>`;});
+   const paidRecord=paid.find(x=>x.uid===uid&&Number(x.year)===year&&Number(x.period)===period);
+   html+=`<div class="person"><b>${label}</b><div class="tablewrap"><table><tr><th>Ürün</th><th>Gerçekleşme</th><th>Prim</th></tr>${rows}</table></div><p><b>Toplam: ${Math.round(total).toLocaleString("tr-TR")} TL</b></p>${gate?"":"<p class='muted'>Bir ürün %75 altında: global prim koşulu sağlanmadı.</p>"}${paidRecord?"<p class='muted'>Durum: Ödenmiş olarak kaydedildi.</p>":(admin()?'<button class="secondary" data-pay-uid="'+uid+'" data-pay-year="'+year+'" data-pay-period="'+period+'" data-pay-telvis="'+amounts.telvis+'" data-pay-ezeros="'+amounts.ezeros+'" data-pay-sugvida="'+amounts.sugvida+'">Ödendi olarak işaretle</button>':"")}</div>`;
   }
-
   $("bonusResults").innerHTML=html||"Hesaplanacak çalışan bulunamadı.";
+  $("bonusResults").querySelectorAll("[data-pay-uid]").forEach(b=>b.onclick=()=>markTwoMonthPaid(b.dataset.payUid,Number(b.dataset.payYear),Number(b.dataset.payPeriod),{telvis:Number(b.dataset.payTelvis),ezeros:Number(b.dataset.payEzeros),sugvida:Number(b.dataset.paySugvida)}));
+ }catch(e){say("bonusResults","Hesaplama hatası: "+e.message);}
+}
 
- }catch(e){
-  say("bonusResults","Hesaplama hatası: "+e.message);
- }
+async function markTwoMonthPaid(uid,year,period,amounts){
+ if(!admin())return;
+ if(!confirm("Bu çalışanın "+year+" "+names[period-1]+" dönemi primini ödenmiş olarak kaydetmek istiyor musun?"))return;
+ try{
+  const ref=doc(db,"bonusSettings","current");
+  await runTransaction(db,async(tx)=>{
+   const snap=await tx.get(ref);
+   if(!snap.exists())throw new Error("Prim ayarları bulunamadı.");
+   const data=snap.data(),records=data.paidBonusRecords||[];
+   if(records.some(x=>x.uid===uid&&Number(x.year)===year&&Number(x.period)===period))throw new Error("Bu dönem primi daha önce ödenmiş olarak kaydedilmiş.");
+   records.push({uid,year,period,telvis:amounts.telvis,ezeros:amounts.ezeros,sugvida:amounts.sugvida,total:amounts.telvis+amounts.ezeros+amounts.sugvida,paidAt:new Date().toISOString(),paidBy:auth.currentUser.uid});
+   tx.set(ref,{paidBonusRecords:records,paidRecordsUpdatedAt:serverTimestamp()},{merge:true});
+  });
+  say("bonusResults","Ödeme kaydı saklandı. Güncel durumu görmek için primleri yeniden hesapla.");
+ }catch(e){say("bonusResults","Ödeme kaydı oluşturulamadı: "+e.message);}
+}
+
+async function calculateHalfYearBonus(){
+ if(!admin())return;
+ const year=Number($("halfYear").value),half=Number($("halfPeriod").value);
+ if(!Number.isInteger(year)||year<2020||year>2100||![1,2].includes(half)){say("halfYearResults","Yıl ve S1/S2 seçimini kontrol et.");return;}
+ try{
+  say("halfYearResults","Altı aylık prim hesaplanıyor...");
+  const [usersSnap,settingsSnap]=await Promise.all([getDocs(collection(db,"users")),getDoc(doc(db,"bonusSettings","current"))]);
+  if(!settingsSnap.exists())throw new Error("Prim tarifesi bulunamadı.");
+  const settings=settingsSnap.data();
+  const products=[{key:"telvis",name:"Telvis",rate:.40},{key:"ezeros",name:"Ezeros",rate:.35},{key:"sugvida",name:"Sugvida",rate:.25}];
+  const firstPeriod=half===1?1:4,lastPeriod=half===1?3:6;
+  const halfStart=year+"-"+(half===1?"01-01":"07-01");
+  const halfEnd=year+"-"+(half===1?"06-30":"12-31");
+  const people=usersSnap.docs.filter(d=>d.id!==ADMIN);
+  const byUid=new Map(people.map(d=>[d.id,{id:d.id,p:d.data()}]));
+  const paid=settings.paidBonusRecords||[];
+  const totals=new Map();
+  const visiting=new Set();
+  const addFor=(uid,root,depth=0)=>{
+   if(depth>20)throw new Error("Devir zincirinde döngü veya aşırı uzun bağlantı var.");
+   if(visiting.has(uid))throw new Error("Çalışan devir zincirinde döngü bulundu.");
+   const person=byUid.get(uid);if(!person)return;
+   visiting.add(uid);
+   const target=totals.get(root)||{actual:{telvis:0,ezeros:0,sugvida:0},target:{telvis:0,ezeros:0,sugvida:0},paid:{telvis:0,ezeros:0,sugvida:0},missing:[]};
+   const p=person.p;
+   const hire=p.employmentStartDate||(p.createdAt?.toDate?p.createdAt.toDate().toISOString().slice(0,10):"");
+   const leave=p.employmentEndDate||"";
+   for(let period=firstPeriod;period<=lastPeriod;period++){
+    const start=year+"-"+String((period-1)*2+1).padStart(2,"0")+"-01";
+    const end=new Date(Date.UTC(year,period*2,0)).toISOString().slice(0,10);
+    if(!hire||hire>end|| (leave&&leave<start))continue;
+    const periodId=year+"-P"+period;
+    // For S1/S2, include only full two-month periods in which this employee was employed.
+    const targetSnapCache=halfCache.targets;
+    const weekSnapCache=halfCache.weeks;
+    const t=targetSnapCache.get(uid+"|"+period);
+    const w=weekSnapCache.get(uid+"|"+period);
+    if(!t||!t.exists()){target.missing.push((p.name||p.username||uid)+" · "+names[period-1]+" hedefi");continue;}
+    const td=t.data();
+    products.forEach(x=>{if(Number.isFinite(Number(td[x.key])))target.target[x.key]+=Number(td[x.key]);else target.missing.push((p.name||uid)+" · "+x.name+" hedefi");});
+    const setting=halfCache.periodSettings.get(periodId);
+    if(!setting||!setting.exists()||!Array.isArray(setting.data().expectedWeeks)){target.missing.push(names[period-1]+" beklenen haftaları");return;}
+    const expected=setting.data().expectedWeeks.map(Number);
+    const docs=w?.docs||[];
+    const periodDocs=docs.filter(z=>Number(z.data().year)===year&&Number(z.data().period)===period);
+    const byWeek=new Map(periodDocs.map(z=>[Number(z.data().week),z.data()]));
+    expected.forEach(n=>{
+     const d=byWeek.get(n);
+     if(!d){target.missing.push((p.name||uid)+" · "+names[period-1]+" hafta "+n);return;}
+     products.forEach(x=>{const v=d[x.key];if(v===null||v===undefined||v===""||!Number.isFinite(Number(v))||Number(v)<0)target.missing.push((p.name||uid)+" · "+names[period-1]+" hafta "+n+" "+x.name);else target.actual[x.key]+=Number(v);});
+    });
+    const pr=paid.find(x=>x.uid===uid&&Number(x.year)===year&&Number(x.period)===period);
+    if(pr)products.forEach(x=>target.paid[x.key]+=Number(pr[x.key]||0));
+   }
+   const next=p.successorUid;
+   if(next)addFor(next,root,depth+1);
+   visiting.delete(uid);
+   totals.set(root,target);
+  };
+  const halfCache={targets:new Map(),weeks:new Map(),periodSettings:new Map()};
+  for(const person of people){
+   const [ts,ws]=await Promise.all([getDocs(collection(db,"users",person.id,"targets")),getDocs(collection(db,"users",person.id,"weeks"))]);
+   for(let period=firstPeriod;period<=lastPeriod;period++){
+    halfCache.targets.set(person.id+"|"+period,await getDoc(doc(db,"users",person.id,"targets",year+"-P"+period)));
+    halfCache.weeks.set(person.id+"|"+period,ws);
+    const pid=year+"-P"+period;
+    if(!halfCache.periodSettings.has(pid))halfCache.periodSettings.set(pid,await getDoc(doc(db,"periodSettings",pid)));
+   }
+  }
+  const roots=people.filter(d=>{
+   const p=d.data(),end=p.employmentEndDate||"";
+   return !end||end>=halfEnd;
+  });
+  let html="";
+  for(const rootDoc of roots){
+   const uid=rootDoc.id,p=rootDoc.data();
+   if(p.status!=="approved"&&p.active!==true)continue;
+   const hire=p.employmentStartDate||(p.createdAt?.toDate?p.createdAt.toDate().toISOString().slice(0,10):"");
+   if(!hire||hire>halfEnd)continue;
+   visiting.clear();
+   addFor(uid,uid);
+   const d=totals.get(uid);
+   if(!d)continue;
+   if(d.missing.length){html+=`<div class="person"><b>${esc(p.name||p.username||"Çalışan")}</b><p class="muted">Hesaplanamadı; eksik veri: ${[...new Set(d.missing)].slice(0,12).map(esc).join(", ")}${d.missing.length>12?"…":""}</p></div>`;continue;}
+   if(products.some(x=>d.target[x.key]<=0)){html+=`<div class="person"><b>${esc(p.name||p.username||"Çalışan")}</b><p class="muted">Toplam hedef sıfır veya eksik.</p></div>`;continue;}
+   const pct={};products.forEach(x=>pct[x.key]=d.actual[x.key]/d.target[x.key]*100);
+   const gate=products.every(x=>pct[x.key]>=75);
+   let total=0,rows="";
+   products.forEach(x=>{
+    const gross=gate?bonusTier(pct[x.key],settings)*x.rate:0;
+    const net=gross-d.paid[x.key];total+=net;
+    rows+=`<tr><td>${x.name}</td><td>${d.actual[x.key].toLocaleString("tr-TR")} / ${d.target[x.key].toLocaleString("tr-TR")}</td><td>%${pct[x.key].toFixed(1).replace(".",",")}</td><td>${Math.round(gross).toLocaleString("tr-TR")} TL</td><td>${Math.round(d.paid[x.key]).toLocaleString("tr-TR")} TL</td><td>${Math.round(net).toLocaleString("tr-TR")} TL</td></tr>`;
+   });
+   html+=`<div class="person"><b>${esc(p.name||p.username||"Çalışan")}</b><div class="muted">Altı aylık satış/hedef toplamı, devir zinciri dahil. Brüt primden aynı yarıyılda ödenmiş iki aylık primler düşülmüştür.</div><div class="tablewrap"><table><tr><th>Ürün</th><th>Satış / Hedef</th><th>Gerçekleşme</th><th>Brüt prim</th><th>Ödenen 2 aylık</th><th>Net S1/S2</th></tr>${rows}</table></div><p><b>Net altı aylık prim: ${Math.round(Math.max(0,total)).toLocaleString("tr-TR")} TL</b></p>${gate?"":"<p class='muted'>En az bir ürün %75 altında; global prim koşulu sağlanmadı.</p>"}</div>`;
+  }
+  $("halfYearResults").innerHTML=html||"Hesaplanacak çalışan bulunamadı.";
+ }catch(e){say("halfYearResults","Altı aylık hesaplama hatası: "+e.message);}
 }
   async function saveBonusSettings(){
  if(!admin())return;
@@ -1186,6 +1194,8 @@ $("assignYear").onchange=loadAssignWeeks;
   $("saveExpectedWeeks").onclick=saveExpectedWeeks;
   $("saveBonusSettings").onclick=saveBonusSettings;
   $("calculateBonus").onclick=calculateBonus;
+$("calculateHalfYearBonus").onclick=calculateHalfYearBonus;
+$("halfYear").value=new Date().getFullYear();
 $("closeYear").onchange=loadExpectedWeeks;
 $("closePeriod").onchange=loadExpectedWeeks;
   $("bonusYear").value=new Date().getFullYear();
