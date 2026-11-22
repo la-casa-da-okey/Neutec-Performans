@@ -114,7 +114,7 @@ async function saveTarget(){
  if(!ok())return;
  const y=+$("targetYear").value,p=+$("period").value,v=["targetTelvis","targetEzeros","targetSugvida"].map(x=>+$(x).value);
  if(!Number.isInteger(y)||y<2020||y>2100||p<1||p>6||v.some(n=>!Number.isInteger(n)||n<0)){say("targetStatus","Hedef değerlerini kontrol et.");return;}
- try{await setDoc(doc(db,"users",auth.currentUser.uid,"targets",y+"-P"+p),{year:y,period:p,periodName:names[p-1],telvis:v[0],ezeros:v[1],sugvida:v[2],updatedAt:serverTimestamp()});say("targetStatus","Hedef kaydedildi.");await performance();await performance();}
+ try{await setDoc(doc(db,"users",auth.currentUser.uid,"targets",y+"-P"+p),{year:y,period:p,periodName:names[p-1],telvis:v[0],ezeros:v[1],sugvida:v[2],updatedAt:serverTimestamp()});say("targetStatus","Hedef kaydedildi.");await performance();await myperformance();}
  catch(e){say("targetStatus","Kaydedilemedi: "+e.message);}
 }
 async function loadTarget(){
@@ -126,7 +126,7 @@ async function saveWeek(){
  if(!ok())return;
  const y=+$("year").value,w=+$("week").value,v=["telvis","ezeros","sugvida"].map(x=>+$(x).value);
  if(!Number.isInteger(y)||y<2020||y>2100||!Number.isInteger(w)||w<1||w>53||v.some(n=>!Number.isInteger(n)||n<0)){say("saveStatus","Yıl, hafta ve satış sayılarını kontrol et.");return;}
- try{const id=y+"-H"+String(w).padStart(2,"0");await setDoc(doc(db,"users",auth.currentUser.uid,"weeks",id),{year:y,week:w,telvis:v[0],ezeros:v[1],sugvida:v[2],updatedAt:serverTimestamp()},{merge:true});say("saveStatus","Haftalık satış kaydedildi.");await performance();await performance();}
+ try{const id=y+"-H"+String(w).padStart(2,"0");await setDoc(doc(db,"users",auth.currentUser.uid,"weeks",id),{year:y,week:w,telvis:v[0],ezeros:v[1],sugvida:v[2],updatedAt:serverTimestamp()},{merge:true});say("saveStatus","Haftalık satış kaydedildi.");await performance();await myperformance();}
  catch(e){say("saveStatus","Kaydedilemedi: "+e.message);}
 }
 async function performance(){
