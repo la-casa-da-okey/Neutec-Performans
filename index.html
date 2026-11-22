@@ -523,8 +523,14 @@ async function calculateBonus(){
 
 async function markTwoMonthPaid(uid,year,period,amounts){
  if(!admin())return;
- if(!confirm("Bu çalışanın "+year+" "+names[period-1]+" dönemi primini ödenmiş olarak kaydetmek istiyor musun?"))return;
+ if(![amounts.telvis,amounts.ezeros,amounts.sugvida].every(v=>Number.isFinite(v)&&v>=0)){say("bonusResults","Ödeme tutarları geçersiz; ödeme kaydedilmedi.");return;}
  try{
+  const employeeSnap=await getDoc(doc(db,"users",uid));
+  if(!employeeSnap.exists())throw new Error("Çalışan kaydı bulunamadı.");
+  const employee=employeeSnap.data();
+  if(employee.employmentEndDate&&localDate()>employee.employmentEndDate)throw new Error("İşten ayrılan çalışan için ödeme kaydı oluşturulamaz.");
+  if(employee.status!=="approved"&&employee.active!==true)throw new Error("Çalışan hesabı aktif değil.");
+  if(!confirm("Bu çalışanın "+year+" "+names[period-1]+" dönemi primini ödenmiş olarak kaydetmek istiyor musun?"))return;
   const ref=doc(db,"bonusSettings","current");
   await runTransaction(db,async(tx)=>{
    const snap=await tx.get(ref);
