@@ -338,6 +338,34 @@ async function assignWeekToPeriod(){
   say("bonusSettingsStatus","Tarife yüklenemedi: "+e.message);
  }
 }
+  async function saveBonusSettings(){
+ if(!admin())return;
+
+ const values={
+  bonus90:Number($("bonus90").value),
+  bonus95:Number($("bonus95").value),
+  bonus100:Number($("bonus100").value),
+  bonus110:Number($("bonus110").value),
+  bonus120:Number($("bonus120").value)
+ };
+
+ if(Object.values(values).some(v=>!Number.isFinite(v)||v<0)){
+  say("bonusSettingsStatus","Prim tutarlarını kontrol et.");
+  return;
+ }
+
+ try{
+  await setDoc(doc(db,"bonusSettings","current"),{
+   ...values,
+   updatedAt:serverTimestamp(),
+   updatedBy:auth.currentUser.uid
+  });
+
+  say("bonusSettingsStatus","Prim tarifesi Firebase'e kaydedildi.");
+ }catch(e){
+  say("bonusSettingsStatus","Kaydedilemedi: "+e.message);
+ }
+}
 async function loadExpectedWeeks(){
  if(!admin())return;
 
