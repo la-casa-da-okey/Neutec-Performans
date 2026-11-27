@@ -1060,7 +1060,7 @@ async function performance(){
     weeks.push(d);
 
     products.forEach(k=>{
-     total[k]+=Number(d[k]||0);
+     total[k]+=weekValue(d,k);
     });
    });
 
@@ -1251,7 +1251,7 @@ async function myPerformance(){
 
     assigned.forEach(w=>{
      products.forEach(k=>{
-      actual[k]+=Number(w[k]||0);
+      actual[k]+=weekValue(w,k);
      });
     });
 
