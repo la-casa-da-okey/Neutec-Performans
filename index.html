@@ -117,35 +117,7 @@
   <button id="saveExpectedWeeks" class="secondary">Hafta Listesini Kaydet</button>
   <div id="expectedWeeksStatus" class="status"></div>
 </section>
-<section class="card hidden tab-panel" data-tab-panel="weeks" id="periodAssignmentSection">
-  <h2>Haftalık Satışları Dönemlere Ata</h2>
 
-  <label for="assignEmployee">Çalışan</label>
-  <select id="assignEmployee">
-    <option value="">Çalışan seç</option>
-  </select>
-
-  <label for="assignYear">Yıl</label>
-  <input id="assignYear" type="number">
-
-  <label for="assignWeek">Hafta</label>
-  <select id="assignWeek">
-    <option value="">Önce çalışan seç</option>
-  </select>
-
-  <label for="assignPeriod">İki aylık dönem</label>
-  <select id="assignPeriod">
-    <option value="1">Ocak–Şubat</option>
-    <option value="2">Mart–Nisan</option>
-    <option value="3">Mayıs–Haziran</option>
-    <option value="4">Temmuz–Ağustos</option>
-    <option value="5">Eylül–Ekim</option>
-    <option value="6">Kasım–Aralık</option>
-  </select>
-
-  <button id="assignPeriodButton">Haftayı Döneme Ata</button>
-  <div id="assignStatus" class="status"></div>
-</section>
 
 <section class="card hidden tab-panel" data-tab-panel="closing" id="employeePeriodCloseSection">
  <h2>İki Aylık Dönem Kesin Satış Kapanışı</h2>
@@ -230,6 +202,12 @@ import{getFirestore,collection,doc,setDoc,getDocs,getDoc,runTransaction,serverTi
 const cfg={apiKey:"AIzaSyBa476SDb3Jg_Vr_hjH_1OJ-GR1zczNRCQ",authDomain:"neutec-performans-c483c.firebaseapp.com",projectId:"neutec-performans-c483c",storageBucket:"neutec-performans-c483c.firebasestorage.app",messagingSenderId:"476444856742",appId:"1:476444856742:web:c0d4d1937f29e56a1eff67"};
 const app=initializeApp(cfg),auth=getAuth(app),db=getFirestore(app),ADMIN="sxBOyqTTe3SxZK3EO85Cfb0DYfJ3", $=id=>document.getElementById(id);
 const names=["Ocak–Şubat","Mart–Nisan","Mayıs–Haziran","Temmuz–Ağustos","Eylül–Ekim","Kasım–Aralık"];let profile=null,registering=false;
+const weekPeriodInfo=(year,week)=>{
+ const jan4=new Date(Date.UTC(Number(year),0,4));
+ const monday=new Date(jan4);
+ monday.setUTCDate(jan4.getUTCDate()-((jan4.getUTCDay()+6)%7)+((Number(week)-1)*7));
+ return {year:monday.getUTCFullYear(),period:Math.floor(monday.getUTCMonth()/2)+1,start:monday};
+};
 const localDate=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");};
 const admin=()=>auth.currentUser?.uid===ADMIN,ok=()=>{if(admin())return true;if(!(profile?.status==="approved"||profile?.active===true))return false;const end=profile?.employmentEndDate||"";return !end||localDate()<=end;},say=(id,t)=>$(id).textContent=t;
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -309,7 +287,7 @@ async function loadDashboard(){
     getDoc(doc(db,"users",uid,"periodClosures",year+"-P"+period))
    ]);
    const actual={telvis:0,ezeros:0,sugvida:0};
-   ws.forEach(w=>{const d=w.data();if(Number(d.year)===year&&Number(d.period)===period)products.forEach(x=>actual[x.key]+=Number(d[x.key]||0));});
+   ws.forEach(w=>{const d=w.data();const info=weekPeriodInfo(d.year,d.week);if(info.year===year&&info.period===period)products.forEach(x=>actual[x.key]+=Number(d[x.key]||0));});
    if(cs.exists()){const d=cs.data();products.forEach(x=>actual[x.key]=Number(d[x.key]||0));closedCount++;}
    if(ts.exists()){const d=ts.data();products.forEach(x=>targets[x.key]+=Number(d[x.key]||0));}
    else missingTargetCount++;
@@ -334,7 +312,6 @@ async function authChanged(u){
  $("loginArea").classList.toggle("hidden",!!u);
  $("adminPanel").classList.toggle("hidden",!admin());
  $("employeeLifecycleSection").classList.toggle("hidden",!admin());
-  $("periodAssignmentSection").classList.toggle("hidden",!admin());
   $("periodCloseSection").classList.toggle("hidden",!admin());
 
  $("targetSection").classList.add("hidden");
@@ -366,7 +343,6 @@ async function authChanged(u){
   say("mainStatus","Veriler yükleniyor...");
   if(admin())await pending();
    if(admin())await loadEmployeeLifecycle();
-   if(admin())await loadAssignEmployees();
    if(admin())await loadExpectedWeeks();
   $("finalYear").value=new Date().getFullYear();
   await loadPeriodClosingState();
@@ -439,108 +415,6 @@ async function saveEmployeeLifecycle(){
  }
 }
 
-async function loadAssignEmployees(){
- if(!admin())return;
- try{
-  const s=await getDocs(collection(db,"users"));
-  const el=$("assignEmployee");
-  el.innerHTML='<option value="">Çalışan seç</option>';
-
-  s.forEach(d=>{
-   const p=d.data();
-   if(d.id===ADMIN||p.status==="approved"||p.active===true){
-    const o=document.createElement("option");
-    o.value=d.id;
-    o.textContent=(p.name||p.username||(d.id===ADMIN?"Yönetici":"Çalışan"))+(d.id===ADMIN?" · Yönetici":"");
-    el.appendChild(o);
-   }
-  });
- }catch(e){
-  say("assignStatus","Çalışanlar yüklenemedi: "+e.message);
- }
-}
-  
-async function loadAssignWeeks(){
- const uid=$("assignEmployee").value;
- const year=+$("assignYear").value;
- const el=$("assignWeek");
-
- el.innerHTML='<option value="">Hafta seç</option>';
- if(!uid||!year)return;
-
- try{
-  const s=await getDocs(collection(db,"users",uid,"weeks"));
-  const weeks=[];
-
-  s.forEach(d=>{
-   const x=d.data();
-   if(Number(x.year)===year){
-    weeks.push({id:d.id,week:Number(x.week),data:x});
-   }
-  });
-
-  weeks.sort((a,b)=>a.week-b.week);
-
-  weeks.forEach(x=>{
-   const o=document.createElement("option");
-   o.value=x.id;
-   o.textContent="Hafta "+x.week+
-    " · Telvis "+(x.data.telvis||0)+
-    " · Ezeros "+(x.data.ezeros||0)+
-    " · Sugvida "+(x.data.sugvida||0);
-   el.appendChild(o);
-  });
-
-  if(!weeks.length){
-   el.innerHTML='<option value="">Bu yılda kayıtlı hafta yok</option>';
-  }
- }catch(e){
-  say("assignStatus","Haftalar yüklenemedi: "+e.message);
- }
-}
-async function assignWeekToPeriod(){
- if(!admin())return;
-
- const uid=$("assignEmployee").value;
- const selectedYear=Number($("assignYear").value);
- const weekId=$("assignWeek").value;
- const period=Number($("assignPeriod").value);
-
- if(!uid||!Number.isInteger(selectedYear)||selectedYear<2020||selectedYear>2100||!weekId||period<1||period>6){
-  say("assignStatus","Çalışan, geçerli yıl, hafta ve dönem seçmelisin.");
-  return;
- }
-
- try{
-  const ref=doc(db,"users",uid,"weeks",weekId);
-  const snap=await getDoc(ref);
-
-  const closure=await getDoc(doc(db,"users",uid,"periodClosures",selectedYear+"-P"+period));
-  if(closure.exists()){say("assignStatus","Bu çalışanın seçilen dönemi kesinleştirilmiş ve kilitlenmiş.");return;}
-
-  if(!snap.exists()){
-   say("assignStatus","Haftalık kayıt bulunamadı.");
-   return;
-  }
-  if(Number(snap.data().year)!==selectedYear){
-   say("assignStatus","Seçilen hafta, seçili yıla ait değil. Listeyi yenileyip tekrar dene.");
-   await loadAssignWeeks();
-   return;
-  }
-
-  await setDoc(ref,{
-   period:period,
-   periodName:names[period-1],
-   assignedAt:serverTimestamp(),
-   assignedBy:auth.currentUser.uid
-  },{merge:true});
-
-  say("assignStatus","Hafta "+snap.data().week+" · "+names[period-1]+" dönemine atandı.");
-  await loadAssignWeeks();
- }catch(e){
-  say("assignStatus","Atama başarısız: "+e.message);
- }
-}
   async function loadBonusSettings(){
  if(!admin())return;
  try{
@@ -640,7 +514,7 @@ async function calculateBonus(){
    if(!ts.exists()){html+=`<div class="person"><b>${label}</b><p class="muted">Hedef bulunamadı.</p></div>`;continue;}
    const target=ts.data();
    if(products.some(x=>target[x.key]===null||target[x.key]===undefined||target[x.key]===""||!Number.isFinite(Number(target[x.key]))||Number(target[x.key])<=0)){html+=`<div class="person"><b>${label}</b><p class="muted">Hedeflerden biri eksik veya geçersiz.</p></div>`;continue;}
-   const periodWeeks=ws.docs.filter(w=>Number(w.data().year)===year&&Number(w.data().period)===period);
+   const periodWeeks=ws.docs.filter(w=>{const d=w.data(),info=weekPeriodInfo(d.year,d.week);return info.year===year&&info.period===period;});
    const nums=periodWeeks.map(w=>Number(w.data().week));
    if(nums.some((n,i)=>nums.indexOf(n)!==i)){html+=`<div class="person"><b>${label}</b><p class="muted">Tekrarlanan hafta numarası var.</p></div>`;continue;}
    const byWeek=new Map(periodWeeks.map(w=>[Number(w.data().week),w.data()]));
@@ -746,7 +620,7 @@ async function calculateHalfYearBonus(){
      target.missing.push(names[period-1]+" beklenen hafta listesi geçersiz veya tekrarlı");continue;
     }
     const docs=w?.docs||[];
-    const periodDocs=docs.filter(z=>Number(z.data().year)===year&&Number(z.data().period)===period);
+    const periodDocs=docs.filter(z=>{const d=z.data(),info=weekPeriodInfo(d.year,d.week);return info.year===year&&info.period===period;});
     const weekNumbers=periodDocs.map(z=>Number(z.data().week));
     if(weekNumbers.some((n,i)=>weekNumbers.indexOf(n)!==i)){
      target.missing.push((p.name||uid)+" · "+names[period-1]+" tekrarlanan hafta kaydı");continue;
@@ -934,7 +808,8 @@ async function savePeriodClosing(){
   const provisional={telvis:0,ezeros:0,sugvida:0};
   weeksSnap.forEach(w=>{
    const d=w.data();
-   if(Number(d.year)===year&&Number(d.period)===period){
+   const info=weekPeriodInfo(d.year,d.week);
+   if(info.year===year&&info.period===period){
     ["telvis","ezeros","sugvida"].forEach(k=>provisional[k]+=Number(d[k]||0));
    }
   });
@@ -999,7 +874,8 @@ async function closePeriodGlobally(){
 
    ws.forEach(w=>{
     const d=w.data();
-    if(Number(d.year)===year&&Number(d.period)===period){
+    const info=weekPeriodInfo(d.year,d.week);
+    if(info.year===year&&info.period===period){
      assignedWeekCount++;
     }
    });
@@ -1101,11 +977,9 @@ async function saveWeek(){
  try{
   const id=y+"-H"+String(w).padStart(2,"0"),uid=auth.currentUser.uid;
   const existing=await getDoc(doc(db,"users",uid,"weeks",id));
-  const assignedPeriod=existing.exists()?Number(existing.data().period):0;
-  if(assignedPeriod>=1&&assignedPeriod<=6){
-   const closure=await getDoc(doc(db,"users",uid,"periodClosures",y+"-P"+assignedPeriod));
-   if(closure.exists()){say("saveStatus","Bu haftanın bağlı olduğu dönem kesinleştirilmiş. Haftalık satış değiştirilemez.");return;}
-  }
+  const periodInfo=weekPeriodInfo(y,w);
+  const closure=await getDoc(doc(db,"users",uid,"periodClosures",periodInfo.year+"-P"+periodInfo.period));
+  if(closure.exists()){say("saveStatus","Bu haftanın ait olduğu dönem kesinleştirilmiş. Haftalık satış değiştirilemez.");return;}
   await setDoc(doc(db,"users",uid,"weeks",id),{year:y,week:w,telvis:v[0],ezeros:v[1],sugvida:v[2],updatedAt:serverTimestamp()},{merge:true});
   say("saveStatus","Haftalık satış kaydedildi.");await performance();await myPerformance();
  }
@@ -1173,7 +1047,7 @@ async function performance(){
    [...years].sort((a,b)=>b-a).forEach(year=>{
     for(let period=1;period<=6;period++){
      const assigned=weeks.filter(w=>
-      Number(w.year)===year&&Number(w.period)===period
+      weekPeriodInfo(w.year,w.week).year===year&&weekPeriodInfo(w.year,w.week).period===period
      );
 
      const actual={telvis:0,ezeros:0,sugvida:0};
@@ -1311,7 +1185,7 @@ async function myPerformance(){
 
    years.add(year);
    weeks.push(d);
-   if(!Number.isInteger(Number(d.period))||Number(d.period)<1||Number(d.period)>6)unassignedWeekCount++;
+   if(!Number.isInteger(Number(d.week))||Number(d.week)<1||Number(d.week)>53)unassignedWeekCount++;
 
    products.forEach(k=>{
     total[k]+=Number(d[k]||0);
@@ -1464,7 +1338,7 @@ async function myPerformance(){
      ${weeks.map(d=>`
       <tr>
        <td>${d.year}/${d.week}</td>
-       <td>${d.period?esc(names[Number(d.period)-1]||""):"Atanmadı"}</td>
+       <td>${names[weekPeriodInfo(d.year,d.week).period-1]}</td>
        <td>${fmt(d.telvis)}</td>
        <td>${fmt(d.ezeros)}</td>
        <td>${fmt(d.sugvida)}</td>
@@ -1484,9 +1358,6 @@ $("dashboardYear").onchange=loadDashboard;$("dashboardPeriod").onchange=loadDash
 $("registerButton").onclick=register;$("loginButton").onclick=login;$("resetButton").onclick=reset;$("logoutButton").onclick=logout;$("saveTarget").onclick=saveTarget;$("saveWeek").onclick=saveWeek;$("targetYear").onchange=loadTarget;$("period").onchange=loadTarget;
   $("lifecycleEmployee").onchange=loadLifecycleEmployee;
 $("saveEmployeeLifecycle").onclick=saveEmployeeLifecycle;
-$("assignEmployee").onchange=loadAssignWeeks;
-$("assignYear").onchange=loadAssignWeeks;
-  $("assignPeriodButton").onclick=assignWeekToPeriod;
   $("savePeriodClosing").onclick=savePeriodClosing;
   $("saveExpectedWeeks").onclick=saveExpectedWeeks;
   $("saveBonusSettings").onclick=saveBonusSettings;
@@ -1501,7 +1372,6 @@ $("closePeriod").onchange=loadExpectedWeeks;
 $("finalYear").onchange=loadPeriodClosingState;
 $("finalPeriod").onchange=loadPeriodClosingState;
   $("bonusYear").value=new Date().getFullYear();
-$("assignYear").value=new Date().getFullYear();
 $("year").value=new Date().getFullYear();$("targetYear").value=new Date().getFullYear();$("week").value=1;$("closeYear").value=new Date().getFullYear();
 onAuthStateChanged(auth,authChanged);
 </script>
