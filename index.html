@@ -41,39 +41,15 @@
 </section>
   
 <section class="card hidden" id="periodCloseSection">
-  <h2>Yönetici · Dönem Kapatma</h2>
-
-  <p class="muted">
-    Seçilen dönem tüm çalışanlar için tek işlemle kapatılır.
-    Kapatmadan önce haftalık satış ve dönem atamalarını kontrol et.
-  </p>
-
+  <h2>Yönetici · Dönem Hafta Ayarları</h2>
+  <p class="muted">IMS kontrolüne göre bu döneme ait haftaları gir. Sistem hafta numarası varsaymaz.</p>
   <div class="row">
-    <div>
-      <label for="closeYear">Yıl</label>
-      <input id="closeYear" type="number">
-    </div>
-
-    <div>
-      <label for="closePeriod">İki aylık dönem</label>
-      <select id="closePeriod">
-        <option value="1">Ocak–Şubat</option>
-        <option value="2">Mart–Nisan</option>
-        <option value="3">Mayıs–Haziran</option>
-        <option value="4">Temmuz–Ağustos</option>
-        <option value="5">Eylül–Ekim</option>
-        <option value="6">Kasım–Aralık</option>
-      </select>
-    </div>
+    <div><label for="closeYear">Yıl</label><input id="closeYear" type="number"></div>
+    <div><label for="closePeriod">İki aylık dönem</label><select id="closePeriod">
+      <option value="1">Ocak–Şubat</option><option value="2">Mart–Nisan</option><option value="3">Mayıs–Haziran</option><option value="4">Temmuz–Ağustos</option><option value="5">Eylül–Ekim</option><option value="6">Kasım–Aralık</option>
+    </select></div>
   </div>
-
-<div class="card">
   <h3>Dönem İçin Beklenen Haftalar</h3>
-  <p class="muted">
-    IMS kontrolüne göre bu döneme ait haftaları gir.
-    Bu alanlara IMS kontrolüyle kesinleşen hafta numaralarını gir. Sistem hafta numarası varsaymaz.
-  </p>
-
   <div class="grid3">
     <input type="number" id="expectedWeek1" min="1" max="53" placeholder="1. hafta">
     <input type="number" id="expectedWeek2" min="1" max="53" placeholder="2. hafta">
@@ -84,21 +60,9 @@
     <input type="number" id="expectedWeek7" min="1" max="53" placeholder="7. hafta">
     <input type="number" id="expectedWeek8" min="1" max="53" placeholder="8. hafta">
   </div>
-
-  <button id="saveExpectedWeeks" class="secondary">
-    Hafta Listesini Kaydet
-  </button>
-
+  <button id="saveExpectedWeeks" class="secondary">Hafta Listesini Kaydet</button>
   <div id="expectedWeeksStatus" class="status"></div>
-</div>
-
-  <button id="closePeriodButton" class="danger">
-    Dönemi Tüm Çalışanlar İçin Kapat
-  </button>
-
-  <div id="closePeriodStatus" class="status"></div>
 </section>
-
 <section class="card hidden" id="periodAssignmentSection">
   <h2>Haftalık Satışları Dönemlere Ata</h2>
 
@@ -129,6 +93,21 @@
   <div id="assignStatus" class="status"></div>
 </section>
 
+<section class="card hidden" id="employeePeriodCloseSection">
+ <h2>İki Aylık Dönem Kesin Satış Kapanışı</h2>
+ <p class="muted">IMS tarafından kesinleşen iki aylık toplamları ürün bazında gir. Kaydettiğinde bu dönem senin hesabında kesinleşir ve kilitlenir. Haftalık kayıtların silinmez; fark ayrıca gösterilir. Bu işlem geri alınamaz.</p>
+ <div class="row">
+  <div><label for="finalYear">Yıl</label><input id="finalYear" type="number" min="2020" max="2100"></div>
+  <div><label for="finalPeriod">İki aylık dönem</label><select id="finalPeriod">
+   <option value="1">Ocak–Şubat</option><option value="2">Mart–Nisan</option><option value="3">Mayıs–Haziran</option><option value="4">Temmuz–Ağustos</option><option value="5">Eylül–Ekim</option><option value="6">Kasım–Aralık</option>
+  </select></div>
+ </div>
+ <label for="finalTelvis">Telvis kesin kapanış</label><input id="finalTelvis" type="number" min="0" step="1" value="0">
+ <label for="finalEzeros">Ezeros kesin kapanış</label><input id="finalEzeros" type="number" min="0" step="1" value="0">
+ <label for="finalSugvida">Sugvida kesin kapanış</label><input id="finalSugvida" type="number" min="0" step="1" value="0">
+ <button id="savePeriodClosing">Kesinleştir ve Kilitle</button>
+ <div id="periodClosingStatus" class="status"></div>
+</section>
 <section class="card hidden" id="targetSection"><h2>İki Aylık Hedefler</h2><div class="row"><div><label for="targetYear">Hedef yılı</label><input id="targetYear" type="number"></div><div><label for="period">Dönem</label><select id="period"><option value="1">Ocak–Şubat</option><option value="2">Mart–Nisan</option><option value="3">Mayıs–Haziran</option><option value="4">Temmuz–Ağustos</option><option value="5">Eylül–Ekim</option><option value="6">Kasım–Aralık</option></select></div></div><label for="targetTelvis">Telvis hedefi</label><input id="targetTelvis" type="number" min="0" value="0"><label for="targetEzeros">Ezeros hedefi</label><input id="targetEzeros" type="number" min="0" value="0"><label for="targetSugvida">Sugvida hedefi</label><input id="targetSugvida" type="number" min="0" value="0"><button id="saveTarget">Hedefleri Kaydet</button><div id="targetStatus" class="status"></div></section>
   <section class="card hidden" id="bonusSection">
     <div id="bonusSettings" class="hidden">
@@ -242,6 +221,7 @@ async function authChanged(u){
  $("employeeLifecycleSection").classList.toggle("hidden",!admin());
   $("periodAssignmentSection").classList.toggle("hidden",!admin());
   $("periodCloseSection").classList.toggle("hidden",!admin());
+  $("employeePeriodCloseSection").classList.toggle("hidden",!ok());
  $("targetSection").classList.add("hidden");
  $("performanceSection").classList.add("hidden");
   $("myPerformanceSection").classList.add("hidden");
@@ -265,6 +245,8 @@ async function authChanged(u){
    if(admin())await loadEmployeeLifecycle();
    if(admin())await loadAssignEmployees();
    if(admin())await loadExpectedWeeks();
+  $("finalYear").value=new Date().getFullYear();
+  await loadPeriodClosingState();
   await loadTarget();
   await performance();
    await myPerformance();
@@ -767,6 +749,75 @@ async function saveExpectedWeeks(){
  }
 }
 
+
+async function loadPeriodClosingState(){
+ if(!ok()||!auth.currentUser)return;
+ const year=Number($("finalYear").value),period=Number($("finalPeriod").value);
+ if(!Number.isInteger(year)||year<2020||year>2100||period<1||period>6)return;
+ try{
+  const ref=doc(db,"users",auth.currentUser.uid,"periodClosures",year+"-P"+period);
+  const snap=await getDoc(ref);
+  const inputs=["finalTelvis","finalEzeros","finalSugvida"];
+  const button=$("savePeriodClosing");
+  if(snap.exists()){
+   const d=snap.data();
+   $("finalTelvis").value=d.telvis;
+   $("finalEzeros").value=d.ezeros;
+   $("finalSugvida").value=d.sugvida;
+   inputs.forEach(id=>$(id).disabled=true);
+   button.disabled=true;
+   button.textContent="Dönem Kesinleştirildi · Kilitli";
+   say("periodClosingStatus","Bu dönem "+(d.finalizedAt?.toDate?d.finalizedAt.toDate().toLocaleString("tr-TR"):"") +" tarihinde kesinleştirilmiş. Değiştirilemez.");
+  }else{
+   inputs.forEach(id=>$(id).disabled=false);
+   button.disabled=false;
+   button.textContent="Kesinleştir ve Kilitle";
+   say("periodClosingStatus","Bu dönem henüz kesinleştirilmedi.");
+  }
+ }catch(e){say("periodClosingStatus","Kapanış durumu okunamadı: "+e.message);}
+}
+async function savePeriodClosing(){
+ if(!ok()||!auth.currentUser)return;
+ const year=Number($("finalYear").value),period=Number($("finalPeriod").value);
+ const raw=["finalTelvis","finalEzeros","finalSugvida"].map(id=>$(id).value.trim());
+ const values=raw.map(Number);
+ if(!Number.isInteger(year)||year<2020||year>2100||period<1||period>6||raw.some(x=>x==="")||values.some(x=>!Number.isSafeInteger(x)||x<0)){
+  say("periodClosingStatus","Yıl, dönem ve üç ürün için sıfır veya daha büyük tam sayı girmelisin.");return;
+ }
+ if(!confirm(year+" · "+names[period-1]+" dönemi kesin satışlarını kaydedip kilitleyeceksin. Bu işlemden sonra rakamlar değiştirilemez. Devam edilsin mi?"))return;
+ const uid=auth.currentUser.uid,periodId=year+"-P"+period;
+ try{
+  say("periodClosingStatus","Haftalık toplamlarla karşılaştırılıyor...");
+  const weeksSnap=await getDocs(collection(db,"users",uid,"weeks"));
+  const provisional={telvis:0,ezeros:0,sugvida:0};
+  weeksSnap.forEach(w=>{
+   const d=w.data();
+   if(Number(d.year)===year&&Number(d.period)===period){
+    ["telvis","ezeros","sugvida"].forEach(k=>provisional[k]+=Number(d[k]||0));
+   }
+  });
+  const closureRef=doc(db,"users",uid,"periodClosures",periodId);
+  await runTransaction(db,async(tx)=>{
+   const existing=await tx.get(closureRef);
+   if(existing.exists())throw new Error("Bu dönem daha önce kesinleştirilmiş. Kayıt değiştirilemez.");
+   tx.set(closureRef,{
+    year,period,periodName:names[period-1],
+    telvis:values[0],ezeros:values[1],sugvida:values[2],
+    provisionalTelvis:provisional.telvis,
+    provisionalEzeros:provisional.ezeros,
+    provisionalSugvida:provisional.sugvida,
+    deltaTelvis:values[0]-provisional.telvis,
+    deltaEzeros:values[1]-provisional.ezeros,
+    deltaSugvida:values[2]-provisional.sugvida,
+    status:"closed",finalizedAt:serverTimestamp(),finalizedBy:uid
+   });
+  });
+  say("periodClosingStatus","Dönem kesinleştirildi ve kilitlendi. Haftalık toplam ile kesin kapanış farkları performans ve prim hesaplarına yansıtılıyor.");
+  await loadPeriodClosingState();
+  $("bonusYear").value=year;$("bonusPeriod").value=String(period);
+  await Promise.all([myPerformance(),performance(),calculateBonus()]);
+ }catch(e){say("periodClosingStatus","Kesinleştirme başarısız: "+e.message);}
+}
 async function closePeriodGlobally(){
  if(!admin()){
   say("closePeriodStatus","Bu işlem için yönetici yetkisi gerekli.");
@@ -1272,7 +1323,7 @@ $("saveEmployeeLifecycle").onclick=saveEmployeeLifecycle;
 $("assignEmployee").onchange=loadAssignWeeks;
 $("assignYear").onchange=loadAssignWeeks;
   $("assignPeriodButton").onclick=assignWeekToPeriod;
-  $("closePeriodButton").onclick=closePeriodGlobally;
+  $("savePeriodClosing").onclick=savePeriodClosing;
   $("saveExpectedWeeks").onclick=saveExpectedWeeks;
   $("saveBonusSettings").onclick=saveBonusSettings;
 $("cleanBonusHistory").onclick=cleanOldBonusHistory;
@@ -1281,6 +1332,8 @@ $("calculateHalfYearBonus").onclick=calculateHalfYearBonus;
 $("halfYear").value=new Date().getFullYear();
 $("closeYear").onchange=loadExpectedWeeks;
 $("closePeriod").onchange=loadExpectedWeeks;
+$("finalYear").onchange=loadPeriodClosingState;
+$("finalPeriod").onchange=loadPeriodClosingState;
   $("bonusYear").value=new Date().getFullYear();
 $("assignYear").value=new Date().getFullYear();
 $("year").value=new Date().getFullYear();$("targetYear").value=new Date().getFullYear();$("week").value=1;$("closeYear").value=new Date().getFullYear();
