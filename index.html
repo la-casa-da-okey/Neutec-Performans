@@ -612,39 +612,39 @@ async function calculateHalfYearBonus(){
      if(pr)products.forEach(x=>target.paid[x.key]+=Number(pr[x.key]||0));
      continue;
     }
-    const setting=halfCache.periodSettings.get(periodId);
-    if(!setting||!setting.exists()||!Array.isArray(setting.data().expectedWeeks)){target.missing.push(names[period-1]+" beklenen haftaları");return;}
-    const expected=setting.data().expectedWeeks.map(Number);
-    if(!expected.length||expected.some(n=>!Number.isInteger(n)||n<1||n>53)||new Set(expected).size!==expected.length){
-     target.missing.push(names[period-1]+" beklenen hafta listesi geçersiz veya tekrarlı");continue;
-    }
+    const expected=isoWeeksInPeriod(year,period);
     const docs=w?.docs||[];
-    const periodDocs=docs.filter(z=>{const d=z.data(),info=weekPeriodInfo(d.year,d.week);return info.year===year&&info.period===period;});
-    const weekNumbers=periodDocs.map(z=>Number(z.data().week));
-    if(weekNumbers.some((n,i)=>weekNumbers.indexOf(n)!==i)){
+    const expectedKeys=new Set(expected.map(x=>x.year+"-"+x.week));
+    const periodDocs=docs.filter(z=>{const d=z.data();return expectedKeys.has(Number(d.year)+"-"+Number(d.week));});
+    const weekKeys=periodDocs.map(z=>Number(z.data().year)+"-"+Number(z.data().week));
+    if(weekKeys.some((n,i)=>weekKeys.indexOf(n)!==i)){
      target.missing.push((p.name||uid)+" · "+names[period-1]+" tekrarlanan hafta kaydı");continue;
     }
-    const byWeek=new Map(periodDocs.map(z=>[Number(z.data().week),z.data()]));
+    const byWeek=new Map(periodDocs.map(z=>[Number(z.data().year)+"-"+Number(z.data().week),z.data()]));
+    let periodMissing=false;
     expected.forEach(n=>{
-     const d=byWeek.get(n);
-     if(!d){target.missing.push((p.name||uid)+" · "+names[period-1]+" hafta "+n);return;}
-     products.forEach(x=>{const v=d[x.key];if(v===null||v===undefined||v===""||!Number.isFinite(Number(v))||Number(v)<0)target.missing.push((p.name||uid)+" · "+names[period-1]+" hafta "+n+" "+x.name);else target.actual[x.key]+=Number(v);});
+     const d=byWeek.get(n.year+"-"+n.week);
+     if(!d||d.carryoverOnly===true||products.some(x=>d[x.key]===null||d[x.key]===undefined||d[x.key]===""||!Number.isFinite(Number(d[x.key]))||Number(d[x.key])<0)){
+      target.missing.push((p.name||uid)+" · "+names[period-1]+" hafta "+n.year+"-"+n.week+" eksik/geçersiz");
+      periodMissing=true;
+      return;
+     }
+     products.forEach(x=>target.actual[x.key]+=weekValue(d,x.key));
     });
+    if(periodMissing)continue;
     const pr=paid.find(x=>x.uid===uid&&Number(x.year)===year&&Number(x.period)===period);
     if(pr)products.forEach(x=>target.paid[x.key]+=Number(pr[x.key]||0));
    }
    totals.set(root,target);
   };
-  const halfCache={targets:new Map(),weeks:new Map(),periodSettings:new Map(),closures:new Map()};
+  const halfCache={targets:new Map(),weeks:new Map(),closures:new Map()};
   for(const person of people){
    const ws=await getDocs(collection(db,"users",person.id,"weeks"));
    for(let period=firstPeriod;period<=lastPeriod;period++){
     halfCache.targets.set(person.id+"|"+period,await getDoc(doc(db,"users",person.id,"targets",year+"-P"+period)));
     halfCache.weeks.set(person.id+"|"+period,ws);
     halfCache.closures.set(person.id+"|"+period,await getDoc(doc(db,"users",person.id,"periodClosures",year+"-P"+period)));
-    const pid=year+"-P"+period;
-    if(!halfCache.periodSettings.has(pid))halfCache.periodSettings.set(pid,await getDoc(doc(db,"periodSettings",pid)));
-   }
+    }
   }
   const roots=people.filter(d=>{
    const p=d.data(),end=p.employmentEndDate||"";
