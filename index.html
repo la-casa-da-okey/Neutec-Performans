@@ -208,6 +208,21 @@ const weekPeriodInfo=(year,week)=>{
  monday.setUTCDate(jan4.getUTCDate()-((jan4.getUTCDay()+6)%7)+((Number(week)-1)*7));
  return {year:monday.getUTCFullYear(),period:Math.floor(monday.getUTCMonth()/2)+1,start:monday};
 };
+const nextPeriodFirstWeek=(year,period)=>{
+ let y=Number(year),month=Number(period)*2;
+ if(month>=12){y++;month=0;}
+ const first=new Date(Date.UTC(y,month,1));
+ const monday=new Date(first);
+ monday.setUTCDate(first.getUTCDate()+((8-first.getUTCDay())%7));
+ const thursday=new Date(monday);thursday.setUTCDate(monday.getUTCDate()+3);
+ const isoYear=thursday.getUTCFullYear();
+ const jan4=new Date(Date.UTC(isoYear,0,4));
+ const firstMonday=new Date(jan4);
+ firstMonday.setUTCDate(jan4.getUTCDate()-((jan4.getUTCDay()+6)%7));
+ const week=1+Math.round((monday-firstMonday)/(7*86400000));
+ return {year:isoYear,week};
+};
+const weekValue=(data,key)=>Number(data[key]||0)+Number(data["carryover"+key[0].toUpperCase()+key.slice(1)]||0);
 const localDate=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");};
 const admin=()=>auth.currentUser?.uid===ADMIN,ok=()=>{if(admin())return true;if(!(profile?.status==="approved"||profile?.active===true))return false;const end=profile?.employmentEndDate||"";return !end||localDate()<=end;},say=(id,t)=>$(id).textContent=t;
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -287,7 +302,7 @@ async function loadDashboard(){
     getDoc(doc(db,"users",uid,"periodClosures",year+"-P"+period))
    ]);
    const actual={telvis:0,ezeros:0,sugvida:0};
-   ws.forEach(w=>{const d=w.data();const info=weekPeriodInfo(d.year,d.week);if(info.year===year&&info.period===period)products.forEach(x=>actual[x.key]+=Number(d[x.key]||0));});
+   ws.forEach(w=>{const d=w.data();const info=weekPeriodInfo(d.year,d.week);if(info.year===year&&info.period===period)products.forEach(x=>actual[x.key]+=weekValue(d,x.key));});
    if(cs.exists()){const d=cs.data();products.forEach(x=>actual[x.key]=Number(d[x.key]||0));closedCount++;}
    if(ts.exists()){const d=ts.data();products.forEach(x=>targets[x.key]+=Number(d[x.key]||0));}
    else missingTargetCount++;
@@ -526,7 +541,7 @@ async function calculateBonus(){
     if(!expectedWeeksValid){html+=`<div class="person"><b>${label}</b><p class="muted">Kesin kapanış yok; beklenen hafta listesi kaydedilmemiş veya geçersiz.</p></div>`;continue;}
     const issues=expectedWeeks.filter(w=>{const d=byWeek.get(w);return !d||products.some(x=>d[x.key]===null||d[x.key]===undefined||d[x.key]===""||!Number.isFinite(Number(d[x.key]))||Number(d[x.key])<0);});
     if(issues.length){html+=`<div class="person"><b>${label}</b><p class="muted">Kesin kapanış yok; eksik/hatalı haftalar: ${issues.join(", ")}.</p></div>`;continue;}
-    expectedWeeks.forEach(w=>products.forEach(x=>actual[x.key]+=Number(byWeek.get(w)[x.key])));
+    expectedWeeks.forEach(w=>products.forEach(x=>actual[x.key]+=weekValue(byWeek.get(w),x.key)));
    }
    const percentages={};products.forEach(x=>percentages[x.key]=actual[x.key]/Number(target[x.key])*100);
    const gate=products.every(x=>percentages[x.key]>=75);
@@ -810,13 +825,21 @@ async function savePeriodClosing(){
    const d=w.data();
    const info=weekPeriodInfo(d.year,d.week);
    if(info.year===year&&info.period===period){
-    ["telvis","ezeros","sugvida"].forEach(k=>provisional[k]+=Number(d[k]||0));
+    ["telvis","ezeros","sugvida"].forEach(k=>provisional[k]+=weekValue(d,k));
    }
   });
   const closureRef=doc(db,"users",uid,"periodClosures",periodId);
+  const nextWeek=nextPeriodFirstWeek(year,period);
+  const nextWeekId=nextWeek.year+"-H"+String(nextWeek.week).padStart(2,"0");
+  const nextWeekRef=doc(db,"users",uid,"weeks",nextWeekId);
   await runTransaction(db,async(tx)=>{
-   const existing=await tx.get(closureRef);
+   const [existing,nextSnap]=await Promise.all([tx.get(closureRef),tx.get(nextWeekRef)]);
    if(existing.exists())throw new Error("Bu dönem daha önce kesinleştirilmiş. Kayıt değiştirilemez.");
+   const carry={
+    telvis:provisional.telvis-values[0],
+    ezeros:provisional.ezeros-values[1],
+    sugvida:provisional.sugvida-values[2]
+   };
    tx.set(closureRef,{
     year,period,periodName:names[period-1],
     telvis:values[0],ezeros:values[1],sugvida:values[2],
@@ -826,10 +849,20 @@ async function savePeriodClosing(){
     deltaTelvis:values[0]-provisional.telvis,
     deltaEzeros:values[1]-provisional.ezeros,
     deltaSugvida:values[2]-provisional.sugvida,
+    carryoverTelvis:carry.telvis,carryoverEzeros:carry.ezeros,carryoverSugvida:carry.sugvida,
+    carryoverYear:nextWeek.year,carryoverWeek:nextWeek.week,
     status:"closed",finalizedAt:serverTimestamp(),finalizedBy:uid
    });
+   const old=nextSnap.exists()?nextSnap.data():{};
+   tx.set(nextWeekRef,{
+    year:nextWeek.year,week:nextWeek.week,
+    carryoverTelvis:Number(old.carryoverTelvis||0)+carry.telvis,
+    carryoverEzeros:Number(old.carryoverEzeros||0)+carry.ezeros,
+    carryoverSugvida:Number(old.carryoverSugvida||0)+carry.sugvida,
+    updatedAt:serverTimestamp()
+   },{merge:true});
   });
-  say("periodClosingStatus","Dönem kesinleştirildi ve kilitlendi. Haftalık toplam ile kesin kapanış farkları performans ve prim hesaplarına yansıtılıyor.");
+  say("periodClosingStatus","Dönem kesinleştirildi. Haftalık-kapanış farkı "+nextWeek.year+" · "+nextWeek.week+". haftaya otomatik aktarıldı.");
   await loadPeriodClosingState();
   $("bonusYear").value=year;$("bonusPeriod").value=String(period);
   await Promise.all([myPerformance(),performance(),calculateBonus()]);
@@ -1054,7 +1087,7 @@ async function performance(){
 
      assigned.forEach(w=>{
       products.forEach(k=>{
-       actual[k]+=Number(w[k]||0);
+       actual[k]+=weekValue(w,k);
       });
      });
 
@@ -1341,9 +1374,9 @@ async function myPerformance(){
       <tr>
        <td>${d.year}/${d.week}</td>
        <td>${names[weekPeriodInfo(d.year,d.week).period-1]}</td>
-       <td>${fmt(d.telvis)}</td>
-       <td>${fmt(d.ezeros)}</td>
-       <td>${fmt(d.sugvida)}</td>
+       <td>${fmt(weekValue(d,"telvis"))}</td>
+       <td>${fmt(weekValue(d,"ezeros"))}</td>
+       <td>${fmt(weekValue(d,"sugvida"))}</td>
       </tr>
      `).join("")||"<tr><td colspan='5'>Henüz satış kaydı yok</td></tr>"}
     </table>
