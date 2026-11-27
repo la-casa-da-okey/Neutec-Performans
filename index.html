@@ -247,7 +247,10 @@ function switchTab(tab){
  document.querySelectorAll("[data-tab-panel]").forEach(el=>{
   el.classList.toggle("active",el.dataset.tabPanel===tab);
  });
- document.querySelectorAll("#mainTabs [data-tab]").forEach(b=>b.classList.toggle("active",b.dataset.tab===tab));
+ document.querySelectorAll("#mainTabs [data-tab]").forEach(b=>{
+  b.classList.toggle("active",b.dataset.tab===tab);
+  b.classList.toggle("hidden",b.hasAttribute("data-admin-tab")&&!admin());
+ });
 }
 async function loadDashboard(){
  if(!ok()||!auth.currentUser)return;
@@ -270,7 +273,7 @@ async function loadDashboard(){
    const end=new Date(Date.UTC(year,period*2,0)).toISOString().slice(0,10);
    const hire=p.employmentStartDate||(p.createdAt?.toDate?p.createdAt.toDate().toISOString().slice(0,10):"");
    const leave=p.employmentEndDate||"";
-   if(!admin()&&(!hire||hire>start||(leave&&leave<end))){} 
+
    const [ws,ts,cs]=await Promise.all([
     getDocs(collection(db,"users",uid,"weeks")),
     getDoc(doc(db,"users",uid,"targets",year+"-P"+period)),
