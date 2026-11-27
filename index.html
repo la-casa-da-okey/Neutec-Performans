@@ -1023,7 +1023,8 @@ async function performance(){
 
     if(!Number.isInteger(year))return;
 
-    years.add(year);
+    const info=weekPeriodInfo(d.year,d.week);
+    years.add(info.year);
     weeks.push(d);
 
     products.forEach(k=>{
@@ -1183,7 +1184,8 @@ async function myPerformance(){
 
    if(!Number.isInteger(year))return;
 
-   years.add(year);
+   const info=weekPeriodInfo(d.year,d.week);
+   years.add(info.year);
    weeks.push(d);
    if(!Number.isInteger(Number(d.week))||Number(d.week)<1||Number(d.week)>53)unassignedWeekCount++;
 
@@ -1208,9 +1210,10 @@ async function myPerformance(){
   [...years].sort((a,b)=>a-b).forEach(year=>{
    for(let period=1;period<=6;period++){
 
-    const assigned=weeks.filter(w=>
-     Number(w.year)===year&&Number(w.period)===period
-    );
+    const assigned=weeks.filter(w=>{
+     const info=weekPeriodInfo(w.year,w.week);
+     return info.year===year&&info.period===period;
+    });
 
     const actual={telvis:0,ezeros:0,sugvida:0};
 
