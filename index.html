@@ -271,7 +271,7 @@ function switchTab(tab){
  const allowed=new Set(["dashboard","weekly","targets","closing","bonus","detail","team","weeks","employees","users"]);
  if(!allowed.has(tab))tab="dashboard";
  if(["team","weeks","employees","users"].includes(tab)&&!admin())tab="dashboard";
- $("dashboardSection").classList.toggle("hidden",!ok());
+ $("dashboardSection").classList.toggle("hidden",!ok()||tab!=="dashboard");
  $("dashboardSection").classList.toggle("active",tab==="dashboard");
  document.querySelectorAll("[data-tab-panel]").forEach(el=>{
   el.classList.toggle("active",el.dataset.tabPanel===tab);
