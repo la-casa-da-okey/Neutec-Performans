@@ -226,6 +226,8 @@ async function authChanged(u){
  $("performanceSection").classList.add("hidden");
   $("myPerformanceSection").classList.add("hidden");
  $("weekSection").classList.add("hidden");
+ $("employeePeriodCloseSection").classList.add("hidden");
+ $("bonusSection").classList.add("hidden");
  if(!u){$("performance").textContent="Giriş yapıldığında yüklenecek.";say("mainStatus","Giriş bekleniyor.");return;}
  try{
   const s=await getDoc(doc(db,"users",u.uid));profile=s.exists()?s.data():null;
