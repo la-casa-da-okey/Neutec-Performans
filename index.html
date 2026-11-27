@@ -391,6 +391,9 @@ async function assignWeekToPeriod(){
   const ref=doc(db,"users",uid,"weeks",weekId);
   const snap=await getDoc(ref);
 
+  const closure=await getDoc(doc(db,"users",uid,"periodClosures",selectedYear+"-P"+period));
+  if(closure.exists()){say("assignStatus","Bu çalışanın seçilen dönemi kesinleştirilmiş ve kilitlenmiş.");return;}
+
   if(!snap.exists()){
    say("assignStatus","Haftalık kayıt bulunamadı.");
    return;
@@ -946,7 +949,13 @@ async function saveTarget(){
  if(!Number.isInteger(y)||y<2020||y>2100||p<1||p>6||raw.some(x=>x==="")||v.some(n=>!Number.isInteger(n)||n<=0)){
   say("targetStatus","Üç ürün için de sıfırdan büyük, tam sayı hedef girmelisin.");return;
  }
- try{await setDoc(doc(db,"users",auth.currentUser.uid,"targets",y+"-P"+p),{year:y,period:p,periodName:names[p-1],telvis:v[0],ezeros:v[1],sugvida:v[2],updatedAt:serverTimestamp()});say("targetStatus","Hedef kaydedildi.");await performance();await myPerformance();}
+ try{
+  const uid=auth.currentUser.uid;
+  const closure=await getDoc(doc(db,"users",uid,"periodClosures",y+"-P"+p));
+  if(closure.exists()){say("targetStatus","Bu dönem kesinleştirilmiş. Hedef değiştirilemez.");return;}
+  await setDoc(doc(db,"users",uid,"targets",y+"-P"+p),{year:y,period:p,periodName:names[p-1],telvis:v[0],ezeros:v[1],sugvida:v[2],updatedAt:serverTimestamp()});
+  say("targetStatus","Hedef kaydedildi.");await performance();await myPerformance();
+ }
  catch(e){say("targetStatus","Kaydedilemedi: "+e.message);}
 }
 async function loadTarget(){
@@ -962,7 +971,17 @@ async function saveWeek(){
  if(!Number.isInteger(y)||y<2020||y>2100||!Number.isInteger(w)||w<1||w>53||raw.some(x=>x==="")||v.some(n=>!Number.isInteger(n)||n<0)){
   say("saveStatus","Yıl, hafta ve üç ürünün satış sayılarını kontrol et. Satış 0 olabilir ancak alan boş bırakılamaz.");return;
  }
- try{const id=y+"-H"+String(w).padStart(2,"0");await setDoc(doc(db,"users",auth.currentUser.uid,"weeks",id),{year:y,week:w,telvis:v[0],ezeros:v[1],sugvida:v[2],updatedAt:serverTimestamp()},{merge:true});say("saveStatus","Haftalık satış kaydedildi.");await performance();await myPerformance();}
+ try{
+  const id=y+"-H"+String(w).padStart(2,"0"),uid=auth.currentUser.uid;
+  const existing=await getDoc(doc(db,"users",uid,"weeks",id));
+  const assignedPeriod=existing.exists()?Number(existing.data().period):0;
+  if(assignedPeriod>=1&&assignedPeriod<=6){
+   const closure=await getDoc(doc(db,"users",uid,"periodClosures",y+"-P"+assignedPeriod));
+   if(closure.exists()){say("saveStatus","Bu haftanın bağlı olduğu dönem kesinleştirilmiş. Haftalık satış değiştirilemez.");return;}
+  }
+  await setDoc(doc(db,"users",uid,"weeks",id),{year:y,week:w,telvis:v[0],ezeros:v[1],sugvida:v[2],updatedAt:serverTimestamp()},{merge:true});
+  say("saveStatus","Haftalık satış kaydedildi.");await performance();await myPerformance();
+ }
  catch(e){say("saveStatus","Kaydedilemedi: "+e.message);}
 }
 
