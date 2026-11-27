@@ -54,7 +54,6 @@
  <button type="button" data-tab="bonus">Primler</button>
  <button type="button" data-tab="detail">Detaylı Rapor</button>
  <button type="button" data-tab="team" data-admin-tab="1">Ekip Raporu</button>
- <button type="button" data-tab="weeks" data-admin-tab="1">Hafta Ayarları</button>
  <button type="button" data-tab="employees" data-admin-tab="1">Çalışanlar</button>
  <button type="button" data-tab="users" data-admin-tab="1">Kullanıcılar</button>
 </nav>
@@ -348,8 +347,7 @@ async function authChanged(u){
   say("mainStatus","Veriler yükleniyor...");
   if(admin())await pending();
    if(admin())await loadEmployeeLifecycle();
-   if(admin())await loadExpectedWeeks();
-  $("finalYear").value=new Date().getFullYear();
+     $("finalYear").value=new Date().getFullYear();
   await loadPeriodClosingState();
   await loadTarget();
   await performance();
