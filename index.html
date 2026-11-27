@@ -539,7 +539,7 @@ async function calculateBonus(){
     products.forEach(x=>actual[x.key]=Number(closeSnap.data()[x.key]||0));
    }else{
     if(!expectedWeeksValid){html+=`<div class="person"><b>${label}</b><p class="muted">Kesin kapanış yok; beklenen hafta listesi kaydedilmemiş veya geçersiz.</p></div>`;continue;}
-    const issues=expectedWeeks.filter(w=>{const d=byWeek.get(w);return !d||products.some(x=>d[x.key]===null||d[x.key]===undefined||d[x.key]===""||!Number.isFinite(Number(d[x.key]))||Number(d[x.key])<0);});
+    const issues=expectedWeeks.filter(w=>{const d=byWeek.get(w);return !d||d.carryoverOnly===true||products.some(x=>d[x.key]===null||d[x.key]===undefined||d[x.key]===""||!Number.isFinite(Number(d[x.key]))||Number(d[x.key])<0);});
     if(issues.length){html+=`<div class="person"><b>${label}</b><p class="muted">Kesin kapanış yok; eksik/hatalı haftalar: ${issues.join(", ")}.</p></div>`;continue;}
     expectedWeeks.forEach(w=>products.forEach(x=>actual[x.key]+=weekValue(byWeek.get(w),x.key)));
    }
@@ -856,6 +856,8 @@ async function savePeriodClosing(){
    const old=nextSnap.exists()?nextSnap.data():{};
    tx.set(nextWeekRef,{
     year:nextWeek.year,week:nextWeek.week,
+    telvis:Number(old.telvis||0),ezeros:Number(old.ezeros||0),sugvida:Number(old.sugvida||0),
+    carryoverOnly:!nextSnap.exists()||old.carryoverOnly===true,
     carryoverTelvis:Number(old.carryoverTelvis||0)+carry.telvis,
     carryoverEzeros:Number(old.carryoverEzeros||0)+carry.ezeros,
     carryoverSugvida:Number(old.carryoverSugvida||0)+carry.sugvida,
@@ -1012,7 +1014,7 @@ async function saveWeek(){
   const periodInfo=weekPeriodInfo(y,w);
   const closure=await getDoc(doc(db,"users",uid,"periodClosures",periodInfo.year+"-P"+periodInfo.period));
   if(closure.exists()){say("saveStatus","Bu haftanın ait olduğu dönem kesinleştirilmiş. Haftalık satış değiştirilemez.");return;}
-  await setDoc(doc(db,"users",uid,"weeks",id),{year:y,week:w,telvis:v[0],ezeros:v[1],sugvida:v[2],updatedAt:serverTimestamp()},{merge:true});
+  await setDoc(doc(db,"users",uid,"weeks",id),{year:y,week:w,telvis:v[0],ezeros:v[1],sugvida:v[2],carryoverOnly:false,updatedAt:serverTimestamp()},{merge:true});
   say("saveStatus","Hafta "+w+" otomatik olarak "+periodInfo.year+" · "+names[periodInfo.period-1]+" dönemine eklendi.");await performance();await myPerformance();await loadDashboard();
  }
  catch(e){say("saveStatus","Kaydedilemedi: "+e.message);}
