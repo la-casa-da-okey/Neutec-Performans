@@ -518,10 +518,12 @@ async function calculateBonus(){
    const nums=periodWeeks.map(w=>Number(w.data().week));
    if(nums.some((n,i)=>nums.indexOf(n)!==i)){html+=`<div class="person"><b>${label}</b><p class="muted">Tekrarlanan hafta numarası var.</p></div>`;continue;}
    const byWeek=new Map(periodWeeks.map(w=>[Number(w.data().week),w.data()]));
+   const closeSnap=await getDoc(doc(db,"users",uid,"periodClosures",periodId));
    const issues=expectedWeeks.filter(w=>{const d=byWeek.get(w);return !d||products.some(x=>d[x.key]===null||d[x.key]===undefined||d[x.key]===""||!Number.isFinite(Number(d[x.key]))||Number(d[x.key])<0);});
-   if(issues.length){html+=`<div class="person"><b>${label}</b><p class="muted">Eksik/hatalı haftalar: ${issues.join(", ")}.</p></div>`;continue;}
+   if(!closeSnap.exists()&&issues.length){html+=`<div class="person"><b>${label}</b><p class="muted">Kesin kapanış yok; eksik/hatalı haftalar: ${issues.join(", ")}.</p></div>`;continue;}
    const actual={telvis:0,ezeros:0,sugvida:0};
-   expectedWeeks.forEach(w=>products.forEach(x=>actual[x.key]+=Number(byWeek.get(w)[x.key])));
+   if(closeSnap.exists())products.forEach(x=>actual[x.key]=Number(closeSnap.data()[x.key]||0));
+   else expectedWeeks.forEach(w=>products.forEach(x=>actual[x.key]+=Number(byWeek.get(w)[x.key])));
    const percentages={};products.forEach(x=>percentages[x.key]=actual[x.key]/Number(target[x.key])*100);
    const gate=products.every(x=>percentages[x.key]>=75);
    const amounts={};let total=0,rows="";
@@ -605,6 +607,14 @@ async function calculateHalfYearBonus(){
     if(!expected.length||expected.some(n=>!Number.isInteger(n)||n<1||n>53)||new Set(expected).size!==expected.length){
      target.missing.push(names[period-1]+" beklenen hafta listesi geçersiz veya tekrarlı");continue;
     }
+    const close=halfCache.closures.get(uid+"|"+period);
+    if(close?.exists()){
+     const cd=close.data();
+     products.forEach(x=>{const v=cd[x.key];if(v===null||v===undefined||v===""||!Number.isFinite(Number(v))||Number(v)<0)target.missing.push((p.name||uid)+" · "+names[period-1]+" kesin kapanış "+x.name+" geçersiz");else target.actual[x.key]+=Number(v);});
+     const pr=paid.find(x=>x.uid===uid&&Number(x.year)===year&&Number(x.period)===period);
+     if(pr)products.forEach(x=>target.paid[x.key]+=Number(pr[x.key]||0));
+     continue;
+    }
     const docs=w?.docs||[];
     const periodDocs=docs.filter(z=>Number(z.data().year)===year&&Number(z.data().period)===period);
     const weekNumbers=periodDocs.map(z=>Number(z.data().week));
@@ -622,12 +632,13 @@ async function calculateHalfYearBonus(){
    }
    totals.set(root,target);
   };
-  const halfCache={targets:new Map(),weeks:new Map(),periodSettings:new Map()};
+  const halfCache={targets:new Map(),weeks:new Map(),periodSettings:new Map(),closures:new Map()};
   for(const person of people){
    const ws=await getDocs(collection(db,"users",person.id,"weeks"));
    for(let period=firstPeriod;period<=lastPeriod;period++){
     halfCache.targets.set(person.id+"|"+period,await getDoc(doc(db,"users",person.id,"targets",year+"-P"+period)));
     halfCache.weeks.set(person.id+"|"+period,ws);
+    halfCache.closures.set(person.id+"|"+period,await getDoc(doc(db,"users",person.id,"periodClosures",year+"-P"+period)));
     const pid=year+"-P"+period;
     if(!halfCache.periodSettings.has(pid))halfCache.periodSettings.set(pid,await getDoc(doc(db,"periodSettings",pid)));
    }
@@ -973,14 +984,16 @@ async function performance(){
 
    if(u.id===ADMIN||(p.status!=="approved"&&p.active!==true))continue;
 
-   const [ws,ts]=await Promise.all([
+   const [ws,ts,cs]=await Promise.all([
     getDocs(collection(db,"users",u.id,"weeks")),
-    getDocs(collection(db,"users",u.id,"targets"))
+    getDocs(collection(db,"users",u.id,"targets")),
+    getDocs(collection(db,"users",u.id,"periodClosures"))
    ]);
 
    const total={telvis:0,ezeros:0,sugvida:0};
    const weeks=[];
    const targets={};
+   const closures={};
    const years=new Set();
 
    ws.forEach(x=>{
@@ -999,14 +1012,13 @@ async function performance(){
    });
 
    ts.forEach(x=>{
-    const d=x.data();
-    const year=Number(d.year);
-    const period=Number(d.period);
-
+    const d=x.data(),year=Number(d.year),period=Number(d.period);
     if(!Number.isInteger(year)||period<1||period>6)return;
-
-    years.add(year);
-    targets[year+"-"+period]=d;
+    years.add(year);targets[year+"-"+period]=d;
+   });
+   cs.forEach(x=>{
+    const d=x.data(),year=Number(d.year),period=Number(d.period);
+    if(Number.isInteger(year)&&period>=1&&period<=6){years.add(year);closures[year+"-"+period]=d;}
    });
 
 
@@ -1026,11 +1038,11 @@ async function performance(){
       });
      });
 
-     const target=targets[year+"-"+period]||{
-      telvis:0,ezeros:0,sugvida:0
-     };
-
-     const hasData=assigned.length>0||targets[year+"-"+period];
+     const provisional={...actual};
+     const closed=closures[year+"-"+period];
+     if(closed)products.forEach(k=>actual[k]=Number(closed[k]||0));
+     const target=targets[year+"-"+period]||{telvis:0,ezeros:0,sugvida:0};
+     const hasData=assigned.length>0||targets[year+"-"+period]||closed;
 
      if(!hasData)continue;
 
@@ -1126,15 +1138,17 @@ async function myPerformance(){
  try{
   const uid=auth.currentUser.uid;
 
-  const [ws,ts]=await Promise.all([
+  const [ws,ts,cs]=await Promise.all([
    getDocs(collection(db,"users",uid,"weeks")),
-   getDocs(collection(db,"users",uid,"targets"))
+   getDocs(collection(db,"users",uid,"targets")),
+   getDocs(collection(db,"users",uid,"periodClosures"))
   ]);
 
   const products=["telvis","ezeros","sugvida"];
   const total={telvis:0,ezeros:0,sugvida:0};
   const weeks=[];
   const targets={};
+  const closures={};
   const years=new Set();
   let unassignedWeekCount=0;
 
@@ -1159,14 +1173,13 @@ async function myPerformance(){
   });
 
   ts.forEach(x=>{
-   const d=x.data();
-   const year=Number(d.year);
-   const period=Number(d.period);
-
+   const d=x.data(),year=Number(d.year),period=Number(d.period);
    if(!Number.isInteger(year)||period<1||period>6)return;
-
-   years.add(year);
-   targets[year+"-"+period]=d;
+   years.add(year);targets[year+"-"+period]=d;
+  });
+  cs.forEach(x=>{
+   const d=x.data(),year=Number(d.year),period=Number(d.period);
+   if(Number.isInteger(year)&&period>=1&&period<=6){years.add(year);closures[year+"-"+period]=d;}
   });
 
   const periodRows=[];
@@ -1187,17 +1200,19 @@ async function myPerformance(){
      });
     });
 
-    const target=targets[year+"-"+period]||{
-     telvis:0,ezeros:0,sugvida:0
-    };
-
-    const hasData=assigned.length>0||targets[year+"-"+period];
+    const provisional={...actual};
+    const closed=closures[year+"-"+period];
+    if(closed)products.forEach(k=>actual[k]=Number(closed[k]||0));
+    const target=targets[year+"-"+period]||{telvis:0,ezeros:0,sugvida:0};
+    const hasData=assigned.length>0||targets[year+"-"+period]||closed;
 
     if(!hasData)continue;
 
     chartPeriods.push({
      label:year+" "+names[period-1],
      actual:{...actual},
+     provisional:{...provisional},
+     closed:!!closed,
      target:{
       telvis:Number(target.telvis||0),
       ezeros:Number(target.ezeros||0),
