@@ -341,10 +341,10 @@ async function loadAssignEmployees(){
 
   s.forEach(d=>{
    const p=d.data();
-   if(d.id!==ADMIN&&(p.status==="approved"||p.active===true)){
+   if(d.id===ADMIN||p.status==="approved"||p.active===true){
     const o=document.createElement("option");
     o.value=d.id;
-    o.textContent=p.name||p.username||d.id;
+    o.textContent=(p.name||p.username||(d.id===ADMIN?"Yönetici":"Çalışan"))+(d.id===ADMIN?" · Yönetici":"");
     el.appendChild(o);
    }
   });
@@ -1025,9 +1025,9 @@ async function performance(){
        <tr>
         <th>Dönem</th>
         <th>Hafta</th>
-        <th>Telvis<br>Gerçekleşen / Hedef</th>
-        <th>Ezeros<br>Gerçekleşen / Hedef</th>
-        <th>Sugvida<br>Gerçekleşen / Hedef</th>
+        <th>Telvis<br>Gerçekleşen / Hedef<br>Realizasyon</th>
+        <th>Ezeros<br>Gerçekleşen / Hedef<br>Realizasyon</th>
+        <th>Sugvida<br>Gerçekleşen / Hedef<br>Realizasyon</th>
        </tr>
        ${periodRows.join("")||"<tr><td colspan='5'>Henüz dönem verisi yok</td></tr>"}
       </table>
@@ -1084,6 +1084,7 @@ async function myPerformance(){
   const weeks=[];
   const targets={};
   const years=new Set();
+  let unassignedWeekCount=0;
 
   const fmt=n=>Number(n||0).toLocaleString("tr-TR");
   const pct=(actual,target)=>target>0
@@ -1098,6 +1099,7 @@ async function myPerformance(){
 
    years.add(year);
    weeks.push(d);
+   if(!Number.isInteger(Number(d.period))||Number(d.period)<1||Number(d.period)>6)unassignedWeekCount++;
 
    products.forEach(k=>{
     total[k]+=Number(d[k]||0);
@@ -1213,7 +1215,8 @@ async function myPerformance(){
    </div>
 
    <h3>Grafiklerle dönemsel performans · Son 6 dönem</h3>
-   <div class="muted">Her ürün ayrı ölçekte gösterilir; böylece ürünler arasındaki satış hacmi farkı grafiği yanıltmaz.</div>
+   <div class="muted">Her ürün ayrı ölçekte gösterilir. Mavi sütun gerçekleşen satış, gri sütun hedeftir. Gerçekleşen satış ve realizasyon hesabına yalnızca yönetici tarafından ilgili döneme atanmış haftalar dahil edilir.</div>
+   ${unassignedWeekCount?'<p class="muted" style="color:#fbbf24">Dikkat: '+unassignedWeekCount+' haftalık satış kaydın henüz bir döneme atanmamış. Bu kayıtlar toplam satış kartlarında görünür; dönem grafiğine ve realizasyona dahil edilmez. Yönetici, “Haftalık Satışları Dönemlere Ata” bölümünden haftaları ilgili döneme atamalı.</p>':""}
    ${chartData.length?chartSvg("telvis","Telvis")+chartSvg("ezeros","Ezeros")+chartSvg("sugvida","Sugvida"):"<p class='muted'>Grafik oluşturmak için dönem satış ve hedef verisi bulunamadı.</p>"}
 
    <h3>İki aylık dönem performansım</h3>
