@@ -524,7 +524,7 @@ async function calculateBonus(){
    const endDate=new Date(Date.UTC(year,period*2,0)).toISOString().slice(0,10);
    const hire=p.employmentStartDate||(p.createdAt?.toDate?p.createdAt.toDate().toISOString().slice(0,10):"");
    const leave=p.employmentEndDate||"";
-   if(!hire||hire>startDate||(leave&&leave<endDate)){html+=`<div class="person"><b>${label}</b><p class="muted">Tam dönem çalışma koşulu sağlanmadı veya işe giriş tarihi eksik. İki aylık prim yok.</p></div>`;continue;}
+   if((uid!==ADMIN&&(!hire||hire>startDate))||(leave&&leave<endDate)){html+=`<div class="person"><b>${label}</b><p class="muted">Tam dönem çalışma koşulu sağlanmadı veya işe giriş tarihi eksik. İki aylık prim yok.</p></div>`;continue;}
    const [ws,ts]=await Promise.all([getDocs(collection(db,"users",uid,"weeks")),getDoc(doc(db,"users",uid,"targets",periodId))]);
    if(!ts.exists()){html+=`<div class="person"><b>${label}</b><p class="muted">Hedef bulunamadı.</p></div>`;continue;}
    const target=ts.data();
@@ -598,7 +598,7 @@ async function calculateHalfYearBonus(){
   const firstPeriod=half===1?1:4,lastPeriod=half===1?3:6;
   const halfStart=year+"-"+(half===1?"01-01":"07-01");
   const halfEnd=year+"-"+(half===1?"06-30":"12-31");
-  const people=usersSnap.docs.filter(d=>d.id!==ADMIN);
+  const people=usersSnap.docs;
   const totals=new Map();
   const addFor=(uid,root)=>{
    const person=people.find(d=>d.id===uid);if(!person)return;
@@ -610,7 +610,7 @@ async function calculateHalfYearBonus(){
    for(let period=firstPeriod;period<=lastPeriod;period++){
     const start=year+"-"+String((period-1)*2+1).padStart(2,"0")+"-01";
     const end=new Date(Date.UTC(year,period*2,0)).toISOString().slice(0,10);
-    if(!hire||hire>start||(leave&&leave<end))continue;
+    if((uid!==ADMIN&&(!hire||hire>start))||(leave&&leave<end))continue;
     const periodId=year+"-P"+period;
     // For S1/S2, include only full two-month periods in which this employee was employed.
     const targetSnapCache=halfCache.targets;
@@ -671,7 +671,7 @@ async function calculateHalfYearBonus(){
    const uid=rootDoc.id,p=rootDoc.data();
    if(p.status!=="approved"&&p.active!==true)continue;
    const hire=p.employmentStartDate||(p.createdAt?.toDate?p.createdAt.toDate().toISOString().slice(0,10):"");
-   if(!hire||hire>halfEnd)continue;
+   if(rootDoc.id!==ADMIN&&(!hire||hire>halfEnd))continue;
    addFor(uid,uid);
    const d=totals.get(uid);
    if(!d)continue;
