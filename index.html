@@ -511,7 +511,7 @@ async function calculateBonus(){
   const expectedWeeksValid=!!(expectedWeeks&&expectedWeeks.length&&expectedWeeks.every(w=>Number.isInteger(w)&&w>=1&&w<=53)&&new Set(expectedWeeks).size===expectedWeeks.length);
   const products=[{key:"telvis",name:"Telvis",rate:.40},{key:"ezeros",name:"Ezeros",rate:.35},{key:"sugvida",name:"Sugvida",rate:.25}];
   const users=admin()?await getDocs(collection(db,"users")):null;
-  const employees=admin()?users.docs.filter(u=>{const p=u.data(),end=p.employmentEndDate||"";return u.id!==ADMIN&&(p.status==="approved"||p.active===true)&&(!end||localDate()<=end);}):[{id:auth.currentUser.uid,data:()=>profile||{}}];
+  const employees=admin()?users.docs.filter(u=>{const p=u.data(),end=p.employmentEndDate||"";return (u.id===ADMIN||(p.status==="approved"||p.active===true))&&(!end||localDate()<=end);}):[{id:auth.currentUser.uid,data:()=>profile||{}}];
   const paid=(settings.paidBonusRecords||[]);
   if(!Array.isArray(paid)){say("bonusResults","Ödeme kayıtları bozuk biçimde kaydedilmiş.");return;}
   const paidKeys=paid.map(x=>x.uid+"|"+Number(x.year)+"|"+Number(x.period));
@@ -898,7 +898,7 @@ async function closePeriodGlobally(){
   for(const u of users.docs){
    const p=u.data();
 
-   if(u.id===ADMIN|| (p.status!=="approved"&&p.active!==true))continue;
+   if(u.id!==ADMIN&&p.status!=="approved"&&p.active!==true)continue;
 
    employeeCount++;
 
