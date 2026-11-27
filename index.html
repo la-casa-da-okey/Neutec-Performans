@@ -94,29 +94,7 @@
  <div id="lifecycleStatus" class="status"></div>
 </section>
   
-<section class="card hidden tab-panel" data-tab-panel="weeks" id="periodCloseSection">
-  <h2>Yönetici · Dönem Hafta Ayarları</h2>
-  <p class="muted">IMS kontrolüne göre bu döneme ait haftaları gir. Sistem hafta numarası varsaymaz.</p>
-  <div class="row">
-    <div><label for="closeYear">Yıl</label><input id="closeYear" type="number"></div>
-    <div><label for="closePeriod">İki aylık dönem</label><select id="closePeriod">
-      <option value="1">Ocak–Şubat</option><option value="2">Mart–Nisan</option><option value="3">Mayıs–Haziran</option><option value="4">Temmuz–Ağustos</option><option value="5">Eylül–Ekim</option><option value="6">Kasım–Aralık</option>
-    </select></div>
-  </div>
-  <h3>Dönem İçin Beklenen Haftalar</h3>
-  <div class="grid3">
-    <input type="number" id="expectedWeek1" min="1" max="53" placeholder="1. hafta">
-    <input type="number" id="expectedWeek2" min="1" max="53" placeholder="2. hafta">
-    <input type="number" id="expectedWeek3" min="1" max="53" placeholder="3. hafta">
-    <input type="number" id="expectedWeek4" min="1" max="53" placeholder="4. hafta">
-    <input type="number" id="expectedWeek5" min="1" max="53" placeholder="5. hafta">
-    <input type="number" id="expectedWeek6" min="1" max="53" placeholder="6. hafta">
-    <input type="number" id="expectedWeek7" min="1" max="53" placeholder="7. hafta">
-    <input type="number" id="expectedWeek8" min="1" max="53" placeholder="8. hafta">
-  </div>
-  <button id="saveExpectedWeeks" class="secondary">Hafta Listesini Kaydet</button>
-  <div id="expectedWeeksStatus" class="status"></div>
-</section>
+
 
 
 <section class="card hidden tab-panel" data-tab-panel="closing" id="employeePeriodCloseSection">
@@ -207,6 +185,18 @@ const weekPeriodInfo=(year,week)=>{
  const monday=new Date(jan4);
  monday.setUTCDate(jan4.getUTCDate()-((jan4.getUTCDay()+6)%7)+((Number(week)-1)*7));
  return {year:monday.getUTCFullYear(),period:Math.floor(monday.getUTCMonth()/2)+1,start:monday};
+};
+const isoWeeksInPeriod=(year,period)=>{
+ const out=[];
+ for(let isoYear=Number(year)-1;isoYear<=Number(year)+1;isoYear++){
+  const dec28=new Date(Date.UTC(isoYear,11,28));
+  const lastWeek=(()=>{const jan4=new Date(Date.UTC(isoYear,0,4));const first=new Date(jan4);first.setUTCDate(jan4.getUTCDate()-((jan4.getUTCDay()+6)%7));return 1+Math.round((dec28-first)/604800000);})();
+  for(let week=1;week<=lastWeek;week++){
+   const info=weekPeriodInfo(isoYear,week);
+   if(info.year===Number(year)&&info.period===Number(period))out.push({year:isoYear,week});
+  }
+ }
+ return out;
 };
 const nextPeriodFirstWeek=(year,period)=>{
  let y=Number(year),month=Number(period)*2;
@@ -499,16 +489,12 @@ async function calculateBonus(){
  if(!Number.isInteger(year)||year<2020||year>2100||period<1||period>6){say("bonusResults","Yıl ve dönem seçimini kontrol et.");return;}
  try{
   say("bonusResults","Primler hesaplanıyor...");
-  const [settingSnap,periodSettingsSnap]=await Promise.all([
-   getDoc(doc(db,"bonusSettings","current")),
-   getDoc(doc(db,"periodSettings",periodId))
-  ]);
+  const settingSnap=await getDoc(doc(db,"bonusSettings","current"));
   if(!settingSnap.exists()){say("bonusResults","Prim tarifesi bulunamadı.");return;}
   const settings=settingSnap.data();
   const tariff=["bonus90","bonus95","bonus100","bonus110","bonus120"].map(k=>Number(settings[k]));
   if(tariff.some((v,i)=>!Number.isFinite(v)||v<0||(i>0&&v<tariff[i-1]))){say("bonusResults","Prim tarifesi geçersiz.");return;}
-  const expectedWeeks=periodSettingsSnap.exists()&&Array.isArray(periodSettingsSnap.data().expectedWeeks)?periodSettingsSnap.data().expectedWeeks.map(Number):null;
-  const expectedWeeksValid=!!(expectedWeeks&&expectedWeeks.length&&expectedWeeks.every(w=>Number.isInteger(w)&&w>=1&&w<=53)&&new Set(expectedWeeks).size===expectedWeeks.length);
+  const expectedWeeks=isoWeeksInPeriod(year,period);
   const products=[{key:"telvis",name:"Telvis",rate:.40},{key:"ezeros",name:"Ezeros",rate:.35},{key:"sugvida",name:"Sugvida",rate:.25}];
   const users=admin()?await getDocs(collection(db,"users")):null;
   const employees=admin()?users.docs.filter(u=>{const p=u.data(),end=p.employmentEndDate||"";return (u.id===ADMIN||(p.status==="approved"||p.active===true))&&(!end||localDate()<=end);}):[{id:auth.currentUser.uid,data:()=>profile||{}}];
@@ -529,19 +515,19 @@ async function calculateBonus(){
    if(!ts.exists()){html+=`<div class="person"><b>${label}</b><p class="muted">Hedef bulunamadı.</p></div>`;continue;}
    const target=ts.data();
    if(products.some(x=>target[x.key]===null||target[x.key]===undefined||target[x.key]===""||!Number.isFinite(Number(target[x.key]))||Number(target[x.key])<=0)){html+=`<div class="person"><b>${label}</b><p class="muted">Hedeflerden biri eksik veya geçersiz.</p></div>`;continue;}
-   const periodWeeks=ws.docs.filter(w=>{const d=w.data(),info=weekPeriodInfo(d.year,d.week);return info.year===year&&info.period===period;});
-   const nums=periodWeeks.map(w=>Number(w.data().week));
+   const expectedKeys=new Set(expectedWeeks.map(x=>x.year+"-"+x.week));
+   const periodWeeks=ws.docs.filter(w=>{const d=w.data();return expectedKeys.has(Number(d.year)+"-"+Number(d.week));});
+   const nums=periodWeeks.map(w=>Number(w.data().year)+"-"+Number(w.data().week));
    if(nums.some((n,i)=>nums.indexOf(n)!==i)){html+=`<div class="person"><b>${label}</b><p class="muted">Tekrarlanan hafta numarası var.</p></div>`;continue;}
-   const byWeek=new Map(periodWeeks.map(w=>[Number(w.data().week),w.data()]));
+   const byWeek=new Map(periodWeeks.map(w=>[Number(w.data().year)+"-"+Number(w.data().week),w.data()]));
    const closeSnap=await getDoc(doc(db,"users",uid,"periodClosures",periodId));
    const actual={telvis:0,ezeros:0,sugvida:0};
    if(closeSnap.exists()){
     products.forEach(x=>actual[x.key]=Number(closeSnap.data()[x.key]||0));
    }else{
-    if(!expectedWeeksValid){html+=`<div class="person"><b>${label}</b><p class="muted">Kesin kapanış yok; beklenen hafta listesi kaydedilmemiş veya geçersiz.</p></div>`;continue;}
-    const issues=expectedWeeks.filter(w=>{const d=byWeek.get(w);return !d||d.carryoverOnly===true||products.some(x=>d[x.key]===null||d[x.key]===undefined||d[x.key]===""||!Number.isFinite(Number(d[x.key]))||Number(d[x.key])<0);});
-    if(issues.length){html+=`<div class="person"><b>${label}</b><p class="muted">Kesin kapanış yok; eksik/hatalı haftalar: ${issues.join(", ")}.</p></div>`;continue;}
-    expectedWeeks.forEach(w=>products.forEach(x=>actual[x.key]+=weekValue(byWeek.get(w),x.key)));
+    const issues=expectedWeeks.filter(w=>{const d=byWeek.get(w.year+"-"+w.week);return !d||d.carryoverOnly===true||products.some(x=>d[x.key]===null||d[x.key]===undefined||d[x.key]===""||!Number.isFinite(Number(d[x.key]))||Number(d[x.key])<0);});
+    if(issues.length){html+=`<div class="person"><b>${label}</b><p class="muted">Kesin kapanış yok; eksik/hatalı haftalar: ${issues.map(w=>w.year+"-"+w.week).join(", ")}.</p></div>`;continue;}
+    expectedWeeks.forEach(w=>products.forEach(x=>actual[x.key]+=weekValue(byWeek.get(w.year+"-"+w.week),x.key)));
    }
    const percentages={};products.forEach(x=>percentages[x.key]=actual[x.key]/Number(target[x.key])*100);
    const gate=products.every(x=>percentages[x.key]>=75);
@@ -718,69 +704,6 @@ async function calculateHalfYearBonus(){
   say("bonusSettingsStatus","Kaydedilemedi: "+e.message);
  }
 }
-async function loadExpectedWeeks(){
- if(!admin())return;
-
- const year=Number($("closeYear").value);
- const period=Number($("closePeriod").value);
- if(!Number.isInteger(year)||year<2020||year>2100)return;
-
- try{
-  const id=year+"-P"+period;
-  const snap=await getDoc(doc(db,"periodSettings",id));
-  const weeks=snap.exists()?snap.data().expectedWeeks:[];
-
-  for(let i=1;i<=8;i++){
-   $("expectedWeek"+i).value=weeks[i-1]??"";
-  }
-
-  say("expectedWeeksStatus",
-   snap.exists()?"Kaydedilmiş hafta listesi yüklendi.":"Bu dönem için henüz hafta listesi yok.");
- }catch(e){
-  say("expectedWeeksStatus","Hafta listesi okunamadı: "+e.message);
- }
-}
-
-async function saveExpectedWeeks(){
- if(!admin())return;
-
- const year=Number($("closeYear").value);
- const period=Number($("closePeriod").value);
-
- const weeks=[];
- for(let i=1;i<=8;i++){
-  const value=$("expectedWeek"+i).value.trim();
-  if(value!=="")weeks.push(Number(value));
- }
-
- if(!Number.isInteger(year)||year<2020||year>2100||period<1||period>6){
-  say("expectedWeeksStatus","Yıl veya dönem seçimini kontrol et.");
-  return;
- }
-
- if(weeks.length===0||weeks.some(w=>!Number.isInteger(w)||w<1||w>53)||new Set(weeks).size!==weeks.length){
-  say("expectedWeeksStatus","En az bir geçerli hafta gir. Hafta numaraları tekrarlanmamalı.");
-  return;
- }
-
- try{
-  const id=year+"-P"+period;
-
-  await setDoc(doc(db,"periodSettings",id),{
-   year:year,
-   period:period,
-   expectedWeeks:weeks,
-   updatedAt:serverTimestamp(),
-   updatedBy:auth.currentUser.uid
-  });
-
-  say("expectedWeeksStatus","Hafta listesi kaydedildi: "+weeks.join(", "));
- }catch(e){
-  say("expectedWeeksStatus","Kaydedilemedi: "+e.message);
- }
-}
-
-
 async function loadPeriodClosingState(){
  if(!ok()||!auth.currentUser)return;
  const year=Number($("finalYear").value),period=Number($("finalPeriod").value);
@@ -1396,7 +1319,7 @@ $("registerButton").onclick=register;$("loginButton").onclick=login;$("resetButt
   $("lifecycleEmployee").onchange=loadLifecycleEmployee;
 $("saveEmployeeLifecycle").onclick=saveEmployeeLifecycle;
   $("savePeriodClosing").onclick=savePeriodClosing;
-  $("saveExpectedWeeks").onclick=saveExpectedWeeks;
+  
   $("saveBonusSettings").onclick=saveBonusSettings;
 $("cleanBonusHistory").onclick=cleanOldBonusHistory;
   $("calculateBonus").onclick=calculateBonus;
@@ -1404,8 +1327,7 @@ $("calculateHalfYearBonus").onclick=calculateHalfYearBonus;
 $("dashboardYear").value=new Date().getFullYear();
 $("dashboardPeriod").value=String(Math.floor(new Date().getMonth()/2)+1);
 $("halfYear").value=new Date().getFullYear();
-$("closeYear").onchange=loadExpectedWeeks;
-$("closePeriod").onchange=loadExpectedWeeks;
+ 
 $("finalYear").onchange=loadPeriodClosingState;
 $("finalPeriod").onchange=loadPeriodClosingState;
   $("bonusYear").value=new Date().getFullYear();
