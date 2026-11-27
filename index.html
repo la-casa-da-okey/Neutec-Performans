@@ -221,7 +221,7 @@ async function authChanged(u){
  $("employeeLifecycleSection").classList.toggle("hidden",!admin());
   $("periodAssignmentSection").classList.toggle("hidden",!admin());
   $("periodCloseSection").classList.toggle("hidden",!admin());
-  $("employeePeriodCloseSection").classList.toggle("hidden",!ok());
+
  $("targetSection").classList.add("hidden");
  $("performanceSection").classList.add("hidden");
   $("myPerformanceSection").classList.add("hidden");
@@ -232,6 +232,7 @@ async function authChanged(u){
   if(!admin()&&!profile){await signOut(auth);say("authStatus","Kullanıcı profili bulunamadı.");return;}
   $("welcome").textContent=(profile?.name||profile?.username||u.email)+(admin()?" · Yönetici":"");
   if(!ok()){const ended=profile?.employmentEndDate&&localDate()>profile.employmentEndDate;say("mainStatus",ended?"İşten ayrılış tarihin geçtiği için uygulama ve prim işlemlerine erişimin kapatıldı.":"Hesabın yönetici onayı bekliyor. Onaylandıktan sonra yeniden giriş yap.");$("performance").textContent=ended?"İşten ayrılış nedeniyle erişim kapalı.":"Hesap onay bekliyor.";return;}
+  $("employeePeriodCloseSection").classList.remove("hidden");
    $("bonusSection").classList.remove("hidden");
    $("bonusSettings").classList.toggle("hidden",!admin());
    if(admin())await loadBonusSettings();
