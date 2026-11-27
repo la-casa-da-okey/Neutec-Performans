@@ -62,7 +62,7 @@
  <h2>Performans Takip Raporu</h2>
  <p class="muted" id="dashboardScope">Seçili dönemin satış, hedef ve realizasyon özeti.</p>
  <div class="row">
-  <div><label for="dashboardYear">Yıl</label><input id="dashboardYear" type="number" min="2020" max="2100"></div>
+  <div><label for="dashboardYear">Yıl</label><select id="dashboardYear" aria-label="Rapor yılı"></select></div>
   <div><label for="dashboardPeriod">Dönem</label><select id="dashboardPeriod"><option value="1">Ocak–Şubat</option><option value="2">Mart–Nisan</option><option value="3">Mayıs–Haziran</option><option value="4">Temmuz–Ağustos</option><option value="5">Eylül–Ekim</option><option value="6">Kasım–Aralık</option></select></div>
  </div>
  <div id="dashboardStatus" class="status">Performans özeti yükleniyor...</div>
@@ -100,7 +100,7 @@
  <h2>İki Aylık Dönem Kesin Satış Kapanışı</h2>
  <p class="muted">IMS tarafından kesinleşen iki aylık toplamları ürün bazında gir. Kaydettiğinde bu dönem senin hesabında kesinleşir ve kilitlenir. Haftalık kayıtların silinmez; fark ayrıca gösterilir. Bu işlem geri alınamaz.</p>
  <div class="row">
-  <div><label for="finalYear">Yıl</label><input id="finalYear" type="number" min="2020" max="2100"></div>
+  <div><label for="finalYear">Yıl</label><select id="finalYear" aria-label="Kesin kapanış yılı"></select></div>
   <div><label for="finalPeriod">İki aylık dönem</label><select id="finalPeriod">
    <option value="1">Ocak–Şubat</option><option value="2">Mart–Nisan</option><option value="3">Mayıs–Haziran</option><option value="4">Temmuz–Ağustos</option><option value="5">Eylül–Ekim</option><option value="6">Kasım–Aralık</option>
   </select></div>
@@ -111,7 +111,7 @@
  <button id="savePeriodClosing">Kesinleştir ve Kilitle</button>
  <div id="periodClosingStatus" class="status"></div>
 </section>
-<section class="card hidden tab-panel" data-tab-panel="targets" id="targetSection"><h2>İki Aylık Hedefler</h2><div class="row"><div><label for="targetYear">Hedef yılı</label><input id="targetYear" type="number"></div><div><label for="period">Dönem</label><select id="period"><option value="1">Ocak–Şubat</option><option value="2">Mart–Nisan</option><option value="3">Mayıs–Haziran</option><option value="4">Temmuz–Ağustos</option><option value="5">Eylül–Ekim</option><option value="6">Kasım–Aralık</option></select></div></div><label for="targetTelvis">Telvis hedefi</label><input id="targetTelvis" type="number" min="0" value="0"><label for="targetEzeros">Ezeros hedefi</label><input id="targetEzeros" type="number" min="0" value="0"><label for="targetSugvida">Sugvida hedefi</label><input id="targetSugvida" type="number" min="0" value="0"><button id="saveTarget">Hedefleri Kaydet</button><div id="targetStatus" class="status"></div></section>
+<section class="card hidden tab-panel" data-tab-panel="targets" id="targetSection"><h2>İki Aylık Hedefler</h2><div class="row"><div><label for="targetYear">Hedef yılı</label><select id="targetYear" aria-label="Hedef yılı"></select></div><div><label for="period">Dönem</label><select id="period"><option value="1">Ocak–Şubat</option><option value="2">Mart–Nisan</option><option value="3">Mayıs–Haziran</option><option value="4">Temmuz–Ağustos</option><option value="5">Eylül–Ekim</option><option value="6">Kasım–Aralık</option></select></div></div><label for="targetTelvis">Telvis hedefi</label><input id="targetTelvis" type="number" min="0" value="0"><label for="targetEzeros">Ezeros hedefi</label><input id="targetEzeros" type="number" min="0" value="0"><label for="targetSugvida">Sugvida hedefi</label><input id="targetSugvida" type="number" min="0" value="0"><button id="saveTarget">Hedefleri Kaydet</button><div id="targetStatus" class="status"></div></section>
   <section class="card hidden tab-panel" data-tab-panel="bonus" id="bonusSection">
   <h2>İki Aylık Prim Hesaplama</h2>
   <p class="muted">
@@ -120,7 +120,7 @@
     <div class="row">
   <div>
     <label for="bonusYear">Prim yılı</label>
-    <input id="bonusYear" type="number" min="2020" max="2100">
+    <select id="bonusYear" aria-label="Prim yılı"></select>
   </div>
   <div>
     <label for="bonusPeriod">Prim dönemi</label>
@@ -142,7 +142,7 @@
 <div class="card">
  <h3>Altı Aylık Prim · S1 / S2</h3>
  <p class="muted">S1: Ocak–Haziran · S2: Temmuz–Aralık. İki aylık prim tarifesi kullanılır; ayrı TL baremi yoktur. Aynı yarıyılda ödenmiş iki aylık primler ürün bazında mahsup edilir.</p>
- <div class="row"><div><label for="halfYear">Yıl</label><input id="halfYear" type="number" min="2020" max="2100"></div><div><label for="halfPeriod">Yarıyıl</label><select id="halfPeriod"><option value="1">S1 · Ocak–Haziran</option><option value="2">S2 · Temmuz–Aralık</option></select></div></div>
+ <div class="row"><div><label for="halfYear">Yıl</label><select id="halfYear" aria-label="Yarıyıl prim yılı"></select></div><div><label for="halfPeriod">Yarıyıl</label><select id="halfPeriod"><option value="1">S1 · Ocak–Haziran</option><option value="2">S2 · Temmuz–Aralık</option></select></div></div>
  <button id="calculateHalfYearBonus">S1 / S2 Primini Hesapla</button>
  <div id="halfYearResults" class="status">Henüz hesaplama yapılmadı.</div>
     <div id="bonusSettings" class="hidden">
@@ -169,7 +169,7 @@
 </section>
 <section class="card hidden tab-panel" data-tab-panel="team" id="performanceSection"><h2>Çalışan Performansları</h2><div id="performance">Giriş yapıldığında yüklenecek.</div></section>
 
-  <section class="card hidden tab-panel" data-tab-panel="weekly" id="weekSection"><h2>Haftalık Satış Girişi</h2><div class="row"><div><label for="year">Yıl</label><input id="year" type="number"></div><div><label for="week">Hafta</label><input id="week" type="number" min="1" max="53"></div></div><label for="telvis">Telvis</label><input id="telvis" type="number" min="0" value="0"><label for="ezeros">Ezeros</label><input id="ezeros" type="number" min="0" value="0"><label for="sugvida">Sugvida</label><input id="sugvida" type="number" min="0" value="0"><button id="saveWeek">Haftalık Verileri Kaydet</button><div id="saveStatus" class="status"></div></section>
+  <section class="card hidden tab-panel" data-tab-panel="weekly" id="weekSection"><h2>Haftalık Satış Girişi</h2><div class="row"><div><label for="year">Yıl</label><select id="year" aria-label="Haftalık satış yılı"></select></div><div><label for="week">Hafta</label><input id="week" type="number" min="1" max="53"></div></div><label for="telvis">Telvis</label><input id="telvis" type="number" min="0" value="0"><label for="ezeros">Ezeros</label><input id="ezeros" type="number" min="0" value="0"><label for="sugvida">Sugvida</label><input id="sugvida" type="number" min="0" value="0"><button id="saveWeek">Haftalık Verileri Kaydet</button><div id="saveStatus" class="status"></div></section>
 <section class="card"><h2>Hesap / Giriş</h2><div id="loggedArea" class="hidden"><div id="welcome"></div><button id="logoutButton" class="secondary">Çıkış Yap</button></div><div id="loginArea"><h3>Giriş Yap</h3><label for="email">E-posta</label><input id="email" type="email" autocomplete="username"><label for="password">Şifre</label><input id="password" type="password" autocomplete="current-password"><div class="row"><button id="loginButton">Giriş Yap</button><button id="resetButton" class="secondary">Şifremi Unuttum</button></div><details class="registerDetails"><summary>Kayıt Ol</summary><div class="registerContent"><p class="muted">Gerçek e-posta adresinle kayıt ol. Yönetici onaylamadan uygulama verilerine erişemezsin.</p><label for="newName">Ad Soyad</label><input id="newName" autocomplete="name"><label for="newUsername">Kullanıcı adı</label><input id="newUsername" autocomplete="username"><label for="newEmail">Gerçek e-posta</label><input id="newEmail" type="email" autocomplete="email"><label for="newPassword">Şifre (en az 6 karakter)</label><input id="newPassword" type="password" autocomplete="new-password"><button id="registerButton">Kayıt Oluştur</button></div></details></div><div id="authStatus" class="status"></div></section>
 </main>
 <script type="module">
@@ -1310,6 +1310,16 @@ async function myPerformance(){
  }
 }
 
+const populateYearSelect=id=>{
+ const el=$(id),current=new Date().getFullYear(),selected=el.value;
+ el.innerHTML="";
+ for(let y=current+2;y>=2020;y--){
+  const option=document.createElement("option");
+  option.value=String(y);option.textContent=String(y);el.appendChild(option);
+ }
+ el.value=selected&&[...el.options].some(o=>o.value===selected)?selected:String(current);
+};
+["dashboardYear","finalYear","targetYear","bonusYear","halfYear","year"].forEach(populateYearSelect);
 document.querySelectorAll("#mainTabs [data-tab]").forEach(b=>b.onclick=()=>switchTab(b.dataset.tab));
 $("dashboardYear").onchange=loadDashboard;$("dashboardPeriod").onchange=loadDashboard;
 $("registerButton").onclick=register;$("loginButton").onclick=login;$("resetButton").onclick=reset;$("logoutButton").onclick=logout;$("saveTarget").onclick=saveTarget;$("saveWeek").onclick=saveWeek;$("targetYear").onchange=loadTarget;$("period").onchange=loadTarget;
