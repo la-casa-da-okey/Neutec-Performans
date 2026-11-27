@@ -136,26 +136,6 @@
 </section>
 <section class="card hidden tab-panel" data-tab-panel="targets" id="targetSection"><h2>İki Aylık Hedefler</h2><div class="row"><div><label for="targetYear">Hedef yılı</label><input id="targetYear" type="number"></div><div><label for="period">Dönem</label><select id="period"><option value="1">Ocak–Şubat</option><option value="2">Mart–Nisan</option><option value="3">Mayıs–Haziran</option><option value="4">Temmuz–Ağustos</option><option value="5">Eylül–Ekim</option><option value="6">Kasım–Aralık</option></select></div></div><label for="targetTelvis">Telvis hedefi</label><input id="targetTelvis" type="number" min="0" value="0"><label for="targetEzeros">Ezeros hedefi</label><input id="targetEzeros" type="number" min="0" value="0"><label for="targetSugvida">Sugvida hedefi</label><input id="targetSugvida" type="number" min="0" value="0"><button id="saveTarget">Hedefleri Kaydet</button><div id="targetStatus" class="status"></div></section>
   <section class="card hidden tab-panel" data-tab-panel="bonus" id="bonusSection">
-    <div id="bonusSettings" class="hidden">
-  <h3>Yönetici · Prim Tarifesi</h3>
-  <p class="muted">Üç ürün için ortak prim tutarları.</p>
-
-  <div class="grid3">
-    <input id="bonus90" type="number" min="0" placeholder="%90 primi">
-    <input id="bonus95" type="number" min="0" placeholder="%95 primi">
-    <input id="bonus100" type="number" min="0" placeholder="%100 primi">
-    <input id="bonus110" type="number" min="0" placeholder="%110 primi">
-    <input id="bonus120" type="number" min="0" placeholder="%120 primi">
-  </div>
-
-  <button id="saveBonusSettings" class="secondary">Prim Tarifesini Kaydet</button>
-  <hr>
-  <h3>Ödeme Geçmişi Temizliği</h3>
-  <p class="muted">Yalnızca son 12 aydan daha eski prim ödeme kayıtları silinir. Satış, hedef ve çalışan verileri etkilenmez. Temizlik yönetici tarafından elle başlatılır.</p>
-  <button id="cleanBonusHistory" class="secondary">12 Aydan Eski Ödemeleri Temizle</button>
-  <div id="bonusCleanupStatus" class="status"></div>
-  <div id="bonusSettingsStatus" class="status"></div>
-</div>
   <h2>İki Aylık Prim Hesaplama</h2>
   <p class="muted">
     Ürün bazlı hedef gerçekleşmeleri, prim baremleri ve hesaplanan prim tutarları burada gösterilir.
@@ -188,6 +168,26 @@
  <div class="row"><div><label for="halfYear">Yıl</label><input id="halfYear" type="number" min="2020" max="2100"></div><div><label for="halfPeriod">Yarıyıl</label><select id="halfPeriod"><option value="1">S1 · Ocak–Haziran</option><option value="2">S2 · Temmuz–Aralık</option></select></div></div>
  <button id="calculateHalfYearBonus">S1 / S2 Primini Hesapla</button>
  <div id="halfYearResults" class="status">Henüz hesaplama yapılmadı.</div>
+    <div id="bonusSettings" class="hidden">
+  <h3>Yönetici · Prim Tarifesi</h3>
+  <p class="muted">Üç ürün için ortak prim tutarları.</p>
+
+  <div class="grid3">
+    <input id="bonus90" type="number" min="0" placeholder="%90 primi">
+    <input id="bonus95" type="number" min="0" placeholder="%95 primi">
+    <input id="bonus100" type="number" min="0" placeholder="%100 primi">
+    <input id="bonus110" type="number" min="0" placeholder="%110 primi">
+    <input id="bonus120" type="number" min="0" placeholder="%120 primi">
+  </div>
+
+  <button id="saveBonusSettings" class="secondary">Prim Tarifesini Kaydet</button>
+  <hr>
+  <h3>Ödeme Geçmişi Temizliği</h3>
+  <p class="muted">Yalnızca son 12 aydan daha eski prim ödeme kayıtları silinir. Satış, hedef ve çalışan verileri etkilenmez. Temizlik yönetici tarafından elle başlatılır.</p>
+  <button id="cleanBonusHistory" class="secondary">12 Aydan Eski Ödemeleri Temizle</button>
+  <div id="bonusCleanupStatus" class="status"></div>
+  <div id="bonusSettingsStatus" class="status"></div>
+</div>
 </div>
 </section>
 <section class="card hidden tab-panel" data-tab-panel="team" id="performanceSection"><h2>Çalışan Performansları</h2><div id="performance">Giriş yapıldığında yüklenecek.</div></section>
